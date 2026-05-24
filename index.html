@@ -5,63 +5,66 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Guia Farmaceutica HEMA</title>
 <style>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,sans-serif;background:#EEECEB;color:#1A1917;min-height:100vh}
-.frame{max-width:1300px;margin:20px auto;background:#fff;border:1px solid #D8D5CE;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08)}
-header{background:#3A3A38;color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
-.hl{display:flex;align-items:center;gap:12px}
-.lw{background:#fff;border-radius:6px;padding:4px 8px;display:flex;align-items:center}
-.lw img{height:32px;width:auto}
-.hd{width:1px;height:28px;background:rgba(255,255,255,.3)}
-.ht{font-size:15px;font-weight:700}
-.hs{font-size:10px;color:rgba(255,255,255,.6);margin-top:2px}
-.hdate{font-size:11px;color:#fff;background:rgba(255,255,255,.15);padding:4px 10px;border-radius:20px}
-.toolbar{background:#fff;border-bottom:1px solid #D8D5CE;padding:10px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.tabs{display:flex;gap:3px;background:#DEDAD4;padding:3px;border-radius:8px}
-.tab{padding:6px 16px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:transparent;color:#888780}
-.tab.active{background:#1B4F8A;color:#fff}
-.sw{position:relative;flex:1;min-width:180px}
-.search{width:100%;padding:8px 12px 8px 34px;border:1px solid #D8D5CE;border-radius:8px;font-size:13px;background:#EEECEB;color:#1A1917;outline:none}
-.search:focus{border-color:#9AAAB8;background:#fff}
-.si{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#888780;font-size:14px;pointer-events:none}
-.layout{display:flex;min-height:500px}
-.sidebar{width:240px;background:#F5F4F0;border-right:1px solid #D8D5CE;overflow-y:auto;flex-shrink:0;padding:8px 0}
-.s-reset{display:block;margin:6px 10px 10px;padding:6px 10px;font-size:11px;background:#1B4F8A;color:#fff;border:none;border-radius:6px;cursor:pointer;width:calc(100% - 20px);text-align:left}
+body{font-family:"Inter",Arial,sans-serif;background:#F0EFED;color:#1A1917;min-height:100vh}
+.frame{max-width:1300px;margin:20px auto;background:#fff;border:1px solid #D8D5CE;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1)}
+header{background:linear-gradient(135deg,#2C2C2A 0%,#444441 100%);color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:70px}
+.hl{display:flex;align-items:center;gap:14px}
+.lw{background:#fff;border-radius:8px;padding:5px 10px;display:flex;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.lw img{height:34px;width:auto}
+.hd{width:1px;height:30px;background:rgba(255,255,255,.25)}
+.ht{font-size:16px;font-weight:700;letter-spacing:-.01em}
+.hs{font-size:10px;color:rgba(255,255,255,.55);margin-top:2px;letter-spacing:.08em}
+.hdate{font-size:11px;font-weight:500;color:#fff;background:rgba(255,255,255,.12);padding:5px 12px;border-radius:20px;border:1px solid rgba(255,255,255,.2)}
+.toolbar{background:#fff;border-bottom:1px solid #E8E5DF;padding:12px 20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.tabs{display:flex;gap:3px;background:#F0EFED;padding:4px;border-radius:10px}
+.tab{padding:7px 20px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:transparent;color:#888780;font-family:"Inter",sans-serif;transition:all .15s}
+.tab.active{background:#1B4F8A;color:#fff;box-shadow:0 2px 8px rgba(27,79,138,.25)}
+.sw{position:relative;flex:1;min-width:200px}
+.search{width:100%;padding:9px 14px 9px 36px;border:1.5px solid #E0DDD7;border-radius:10px;font-size:13px;font-family:"Inter",sans-serif;background:#F8F7F5;color:#1A1917;outline:none;transition:all .15s}
+.search:focus{border-color:#1B4F8A;background:#fff;box-shadow:0 0 0 3px rgba(27,79,138,.08)}
+.search::placeholder{color:#AAAAA8}
+.si{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#AAAAA8;font-size:15px;pointer-events:none}
+.layout{display:flex;min-height:520px}
+.sidebar{width:250px;background:#F8F7F5;border-right:1px solid #E8E5DF;overflow-y:auto;flex-shrink:0;padding:10px 0}
+.s-reset{display:flex;align-items:center;gap:6px;margin:0 10px 10px;padding:7px 12px;font-size:12px;font-weight:600;background:#1B4F8A;color:#fff;border:none;border-radius:8px;cursor:pointer;width:calc(100% - 20px)}
 .s-reset:hover{background:#163d6e}
-.n1-item{padding:0}
-.n1-header{padding:8px 12px;font-size:12px;font-weight:700;color:#1A1917;cursor:pointer;display:flex;align-items:center;justify-content:space-between;background:#E8E5DF;border-bottom:1px solid #D8D5CE;user-select:none}
-.n1-header:hover{background:#DDD9D0}
+.n1-header{padding:9px 14px;font-size:11px;font-weight:700;color:#1A1917;cursor:pointer;display:flex;align-items:center;justify-content:space-between;background:#EEECEA;border-bottom:1px solid #E0DDD7;user-select:none;letter-spacing:.04em;text-transform:uppercase}
+.n1-header:hover{background:#E5E2DC}
 .n1-header.active{background:#1B4F8A;color:#fff}
-.n1-arrow{font-size:10px;transition:transform .2s}
-.n1-body{display:none;padding:2px 0}
+.n1-arrow{font-size:9px;opacity:.6;transition:transform .2s}
+.n1-arrow.open{transform:rotate(90deg)}
+.n1-body{display:none}
 .n1-body.open{display:block}
-.n2-item{padding:0}
-.n2-header{padding:6px 14px;font-size:11px;font-weight:600;color:#444441;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none}
-.n2-header:hover{background:#E0DDD7}
-.n2-header.active{color:#1B4F8A;font-weight:700}
-.n2-arrow{font-size:9px;transition:transform .2s}
-.n2-body{display:none;padding:2px 0}
+.n2-header{padding:7px 14px 7px 20px;font-size:11px;font-weight:600;color:#555;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none}
+.n2-header:hover{background:#EEE}
+.n2-header.active{color:#1B4F8A}
+.n2-arrow{font-size:9px;opacity:.5;transition:transform .2s}
+.n2-arrow.open{transform:rotate(90deg)}
+.n2-body{display:none}
 .n2-body.open{display:block}
-.n3-item{padding:5px 20px;font-size:11px;color:#666;cursor:pointer;border-left:2px solid transparent}
-.n3-item:hover{background:#E8E5DF;border-left-color:#9AAAB8}
+.n3-item{padding:5px 14px 5px 28px;font-size:11px;color:#777;cursor:pointer;border-left:2px solid transparent;transition:all .12s}
+.n3-item:hover{background:#E8E5DF;border-left-color:#9AAAB8;color:#333}
 .n3-item.active{background:#E3EDF8;color:#1B4F8A;font-weight:600;border-left-color:#1B4F8A}
 .main{flex:1;overflow:auto}
-.statsbar{padding:7px 14px;background:#E0DDD7;border-bottom:1px solid #D8D5CE;font-size:12px;color:#888780}
+.statsbar{padding:8px 18px;background:#F0EFED;border-bottom:1px solid #E8E5DF;font-size:12px;color:#888780;display:flex;align-items:center;gap:6px}
 .statsbar strong{color:#1A1917}
+.dot{width:6px;height:6px;border-radius:50%;background:#1B4F8A;display:inline-block}
 table{width:100%;border-collapse:collapse;font-size:13px}
-thead th{text-align:left;padding:9px 14px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#888780;border-bottom:2px solid #D8D5CE;background:#E0DDD7;white-space:nowrap;cursor:pointer;position:sticky;top:0}
+thead th{text-align:left;padding:10px 16px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#888780;border-bottom:2px solid #E8E5DF;background:#F5F4F0;white-space:nowrap;cursor:pointer;position:sticky;top:0}
 thead th:hover{color:#1A1917}
-tbody tr{border-bottom:1px solid #EAE7E0}
-tbody tr:hover{background:#F4F2EE}
-td{padding:10px 14px;vertical-align:middle}
-.mn{font-weight:600;color:#1A1917}
-.atc1{font-size:10px;color:#888780;background:#E8E5DF;padding:1px 6px;border-radius:4px;display:inline-block}
-.atc2{font-size:10px;color:#1B4F8A;background:#E3EDF8;padding:1px 6px;border-radius:4px;display:inline-block;margin-top:2px}
-.atc3{font-size:11px;color:#444;background:#F1EFE8;padding:2px 8px;border-radius:5px;display:inline-block;border:1px solid #D8D5CE}
-.empty{text-align:center;padding:3rem;color:#888780}
-mark{background:#FFF3B0;color:#1A1917;border-radius:2px}
-footer{text-align:center;padding:10px;font-size:11px;color:#888780;background:#E0DDD7;border-top:1px solid #D8D5CE}
-@media(max-width:650px){.sidebar{display:none}.frame{margin:0;border-radius:0}}
+tbody tr{border-bottom:1px solid #F0EFED;transition:background .1s}
+tbody tr:hover{background:#F8F7F5}
+td{padding:11px 16px;vertical-align:middle}
+.mn{font-weight:600;color:#1A1917;font-size:13px}
+.atc1-badge{font-size:11px;color:#444441;background:#E8E5DF;padding:3px 10px;border-radius:20px;font-weight:500;display:inline-block;border:1px solid #D8D5CE}
+.atc3-badge{font-size:11px;color:#1B4F8A;background:#E8F0FB;padding:3px 10px;border-radius:20px;font-weight:500;display:inline-block;border:1px solid #C5D8F5}
+.empty{text-align:center;padding:4rem;color:#AAAAA8}
+.empty h3{font-size:16px;margin-bottom:6px;color:#888}
+mark{background:#FFF3B0;color:#1A1917;border-radius:2px;padding:0 1px}
+footer{text-align:center;padding:12px;font-size:11px;color:#AAAAA8;background:#F5F4F0;border-top:1px solid #E8E5DF}
+@media(max-width:700px){.sidebar{display:none}.frame{margin:0;border-radius:0}}
 </style>
 </head>
 <body>
@@ -83,13 +86,13 @@ footer{text-align:center;padding:10px;font-size:11px;color:#888780;background:#E
 </div>
 <div class="layout">
   <div class="sidebar">
-    <button class="s-reset" onclick="resetFilters()">&#x21BA; Ver todos</button>
+    <button class="s-reset" onclick="resetFilters()">&#x21BA;&nbsp; Ver todos</button>
     <div id="atc-tree"></div>
   </div>
   <div class="main">
-    <div class="statsbar" id="stats"></div>
+    <div class="statsbar"><span class="dot"></span><span id="stats"></span></div>
     <table><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table>
-    <div class="empty" id="empty" style="display:none">Sin resultados</div>
+    <div class="empty" id="empty" style="display:none"><h3>Sin resultados</h3><p>Intenta con otra b&uacute;squeda o cambia el filtro.</p></div>
   </div>
 </div>
 <footer>Gu&iacute;a Farmac&eacute;utica HEMA &mdash; Solo para uso interno &mdash; Hospital Especializado de Medicina Avanzada</footer>
@@ -99,51 +102,46 @@ var DATA={"Guia farmaceutica General": [{"Nombre guía": "ACETAMINOFEN JARABE MK
 var SHEETS=Object.keys(DATA),idx=0,sc=0,sd=1,f1="",f2="",f3="";
 
 function switchSheet(i){idx=i;sc=0;sd=1;f1="";f2="";f3="";document.querySelectorAll(".tab").forEach(function(t,j){t.classList.toggle("active",j===i);});document.getElementById("search").value="";buildTree();renderTable();}
-
-function resetFilters(){f1="";f2="";f3="";document.getElementById("search").value="";buildTree();renderTable();}
+function resetFilters(){f1="";f2="";f3="";document.getElementById("search").value="";buildTree();applyFilters();}
 
 function buildTree(){
-  var rows=DATA[SHEETS[idx]];
-  var tree={};
+  var rows=DATA[SHEETS[idx]],tree={};
   rows.forEach(function(r){
-    var a1=r["ATC Nivel 1"]||"Otros",a2=r["ATC Nivel 2"]||"",a3=r["ATC Nivel 3"]||"";
+    var a1=r["ATC Nivel 1"]||"V - Varios",a2=r["ATC Nivel 2"]||"",a3=r["ATC Nivel 3"]||"";
     if(!tree[a1])tree[a1]={};
     if(!tree[a1][a2])tree[a1][a2]={};
     tree[a1][a2][a3]=true;
   });
-  var el=document.getElementById("atc-tree");
-  el.innerHTML="";
+  var el=document.getElementById("atc-tree");el.innerHTML="";
   Object.keys(tree).sort().forEach(function(a1){
-    var n1=document.createElement("div");n1.className="n1-item";
+    var wrap1=document.createElement("div");
     var h1=document.createElement("div");h1.className="n1-header"+(f1===a1?" active":"");
-    h1.innerHTML='<span>'+a1+'</span><span class="n1-arrow">'+(f1===a1?"&#9660;":"&#9658;")+'</span>';
+    var arrow1=document.createElement("span");arrow1.className="n1-arrow"+(f1===a1?" open":"");arrow1.innerHTML="&#9658;";
+    h1.innerHTML="<span>"+a1+"</span>";h1.appendChild(arrow1);
     var b1=document.createElement("div");b1.className="n1-body"+(f1===a1?" open":"");
-    h1.onclick=function(){
-      if(f1===a1){f1="";f2="";f3="";}else{f1=a1;f2="";f3="";}
-      buildTree();applyFilters();
-    };
+    h1.onclick=function(){f1=(f1===a1?"":a1);f2="";f3="";buildTree();applyFilters();};
     Object.keys(tree[a1]).sort().forEach(function(a2){
-      var n2=document.createElement("div");n2.className="n2-item";
+      var wrap2=document.createElement("div");
       var h2=document.createElement("div");h2.className="n2-header"+(f2===a2?" active":"");
-      h2.innerHTML='<span>'+a2+'</span><span class="n2-arrow">'+(f2===a2?"&#9660;":"&#9658;")+'</span>';
+      var arrow2=document.createElement("span");arrow2.className="n2-arrow"+(f2===a2?" open":"");arrow2.innerHTML="&#9658;";
+      h2.innerHTML="<span>"+a2+"</span>";h2.appendChild(arrow2);
       var b2=document.createElement("div");b2.className="n2-body"+(f2===a2?" open":"");
-      h2.onclick=function(e){e.stopPropagation();if(f2===a2){f2="";f3="";}else{f1=a1;f2=a2;f3="";}buildTree();applyFilters();};
+      h2.onclick=function(e){e.stopPropagation();f1=a1;f2=(f2===a2?"":a2);f3="";buildTree();applyFilters();};
       Object.keys(tree[a1][a2]).sort().forEach(function(a3){
         var n3=document.createElement("div");n3.className="n3-item"+(f3===a3?" active":"");
         n3.textContent=a3;
-        n3.onclick=function(e){e.stopPropagation();if(f3===a3){f3="";}else{f1=a1;f2=a2;f3=a3;}buildTree();applyFilters();};
+        n3.onclick=function(e){e.stopPropagation();f1=a1;f2=a2;f3=(f3===a3?"":a3);buildTree();applyFilters();};
         b2.appendChild(n3);
       });
-      n2.appendChild(h2);n2.appendChild(b2);b1.appendChild(n2);
+      wrap2.appendChild(h2);wrap2.appendChild(b2);b1.appendChild(wrap2);
     });
-    n1.appendChild(h1);n1.appendChild(b1);el.appendChild(n1);
+    wrap1.appendChild(h1);wrap1.appendChild(b1);el.appendChild(wrap1);
   });
 }
 
 function renderTable(){
-  var h=Object.keys(DATA[SHEETS[idx]][0]);
   var tr=document.getElementById("thead");tr.innerHTML="";
-  ["Nombre guía","ATC Nivel 3"].forEach(function(x,i){
+  ["Nombre guía","ATC Nivel 1"].forEach(function(x,i){
     var th=document.createElement("th");
     th.textContent=x+(i===sc?(sd===1?" ↑":" ↓"):" ↕");
     (function(col){th.onclick=function(){if(sc===col)sd*=-1;else{sc=col;sd=1;}applyFilters();};})(i);
@@ -154,42 +152,36 @@ function renderTable(){
 
 function applyFilters(){
   var rows=DATA[SHEETS[idx]],q=document.getElementById("search").value.toLowerCase().trim();
-  var cols=["Nombre guía","ATC Nivel 3"];
   var filtered=rows.filter(function(r){
     var mq=!q||Object.values(r).some(function(v){return String(v).toLowerCase().indexOf(q)>=0;});
-    var m1=!f1||r["ATC Nivel 1"]===f1;
-    var m2=!f2||r["ATC Nivel 2"]===f2;
-    var m3=!f3||r["ATC Nivel 3"]===f3;
-    return mq&&m1&&m2&&m3;
+    return mq&&(!f1||r["ATC Nivel 1"]===f1)&&(!f2||r["ATC Nivel 2"]===f2)&&(!f3||r["ATC Nivel 3"]===f3);
   });
   filtered.sort(function(a,b){
-    var va=String(Object.values(a)[sc]||""),vb=String(Object.values(b)[sc]||"");
-    return va.localeCompare(vb)*sd;
+    var k=["Nombre guía","ATC Nivel 1"][sc]||"Nombre guía";
+    return String(a[k]||"").localeCompare(String(b[k]||""))*sd;
   });
   document.querySelectorAll("#thead th").forEach(function(th,i){
+    var cols=["Nombre guía","ATC Nivel 1"];
     th.textContent=cols[i]+(i===sc?(sd===1?" ↑":" ↓"):" ↕");
     (function(col){th.onclick=function(){if(sc===col)sd*=-1;else{sc=col;sd=1;}applyFilters();};})(i);
   });
-  document.getElementById("stats").innerHTML="Mostrando <strong>"+filtered.length+"</strong> de <strong>"+rows.length+"</strong> medicamentos";
+  document.getElementById("stats").innerHTML="Mostrando <strong>"+filtered.length+"</strong> de <strong>"+DATA[SHEETS[idx]].length+"</strong> medicamentos";
   var tbody=document.getElementById("tbody");tbody.innerHTML="";
   if(!filtered.length){document.getElementById("empty").style.display="block";return;}
   document.getElementById("empty").style.display="none";
   filtered.forEach(function(row){
     var tr=document.createElement("tr");
     var td0=document.createElement("td");
-    td0.innerHTML="<span class='mn'>"+hl(row["Nombre guía"]||"",q)+"</span>"
-      +"<br><span class='atc1'>"+row["ATC Nivel 1"]+"</span>"
-      +" <span class='atc2'>"+row["ATC Nivel 2"]+"</span>";
+    td0.innerHTML="<span class='mn'>"+hl(row["Nombre guía"]||"",q)+"</span>";
     tr.appendChild(td0);
     var td1=document.createElement("td");
-    td1.innerHTML="<span class='atc3'>"+hl(row["ATC Nivel 3"]||"",q)+"</span>";
+    td1.innerHTML="<span class='atc1-badge'>"+hl(row["ATC Nivel 1"]||"",q)+"</span>";
     tr.appendChild(td1);
     tbody.appendChild(tr);
   });
 }
 
 function hl(t,q){if(!q)return t;return t.replace(new RegExp("("+q.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")","gi"),"<mark>$1</mark>");}
-
 buildTree();renderTable();
 </script>
 </body>
