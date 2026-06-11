@@ -241,8 +241,8 @@ function applyFilters(){
     if(row["Electrolito Concentrado"])flags+="<span class='flag flag-elec'>ELECTROLITO</span>";
     if(row["Controlado"])flags+="<span class='flag flag-ctrl'>CONTROLADO</span>";
     if(row["Vacuna"])flags+="<span class='flag flag-vacuna'>VACUNA</span>";
-    var nombreSafe=row["Nombre guía"].replace(/"/g,"&quot;");
-    td0.innerHTML="<span class='mn'>"+hl(row["Nombre guía"]||"",q)+"</span><span class='mn-info' onclick=\"openMedInfo(this)\" data-med=\""+nombreSafe+"\" title=\"Ver uso terapéutico\">&#128138;</span>"+(flags?"<div class='flags'>"+flags+"</div>":"");
+    var nombreSafe=row["Nombre guía"].replace(/'/g,"\'");
+    td0.innerHTML="<span class=\'mn\'>"+hl(row["Nombre guía"]||"",q)+"</span><span class=\'mn-info\' onclick=\'openMedInfo(this)\' data-med=\'"+nombreSafe+"\' title=\'Ver uso terapéutico\'>&#128138;</span>"+(flags?"<div class=\'flags\'>"+flags+"</div>":"");
     tr.appendChild(td0);
     var td1=document.createElement("td");
     td1.innerHTML="<span class='atc1-badge'>"+hl(row["ATC Nivel 1"]||"",q)+"</span>";
