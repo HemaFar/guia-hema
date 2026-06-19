@@ -126,10 +126,19 @@ footer{text-align:center;padding:12px;font-size:11px;color:#AAAAA8;background:#F
   thead th:first-child{display:table-cell}
 }
 .mob-menu-btn{display:none;background:#1B4F8A;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:16px;cursor:pointer;flex-shrink:0}
-.mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100}
+.mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200}
 .mob-overlay.open{display:block}
-.sidebar.mob-open{display:flex!important;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:101;box-shadow:4px 0 20px rgba(0,0,0,.2)}
-@media(max-width:700px){.mob-menu-btn{display:flex;align-items:center}}
+.mob-drawer{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;z-index:201;max-height:85vh;overflow-y:auto;box-shadow:0 -4px 24px rgba(0,0,0,.15);transition:transform .3s ease}
+.mob-drawer.open{display:block;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.mob-drawer-handle{width:40px;height:4px;background:#D8D5CE;border-radius:2px;margin:12px auto 0;display:block}
+.mob-drawer-title{padding:12px 16px;font-size:14px;font-weight:700;color:#1A1917;border-bottom:1px solid #E8E5DF;display:flex;align-items:center;justify-content:space-between}
+.mob-drawer-close{background:none;border:none;font-size:20px;color:#888;cursor:pointer;padding:0 4px}
+.mob-drawer-content{padding:8px 0 24px}
+@media(max-width:700px){
+  .mob-menu-btn{display:flex;align-items:center}
+  .sidebar{display:none!important}
+}
 </style>
 </head>
 <body>
@@ -150,7 +159,15 @@ footer{text-align:center;padding:12px;font-size:11px;color:#AAAAA8;background:#F
   </div>
   <div class="sw"><span class="si">&#x1F50D;</span><input class="search" type="text" id="search" placeholder="Buscar medicamento..." oninput="applyFilters()"></div>
 </div>
-<div class="mob-overlay" id="mob-overlay" onclick="toggleMobSidebar()"></div>
+<div class="mob-overlay" id="mob-overlay" onclick="closeMobDrawer()"></div>
+<div class="mob-drawer" id="mob-drawer">
+  <span class="mob-drawer-handle"></span>
+  <div class="mob-drawer-title">
+    <span>&#x1F50D; Filtros</span>
+    <button class="mob-drawer-close" onclick="closeMobDrawer()">&#x2715;</button>
+  </div>
+  <div class="mob-drawer-content" id="mob-drawer-content"></div>
+</div>
 <div class="layout">
   <div class="sidebar">
     <button class="s-reset" onclick="resetAll()">&#x21BA;&nbsp; Ver todos</button>
@@ -199,15 +216,65 @@ var DATA={"Guia farmaceutica General": [{"Nombre guía": "ABINTRA NARANJA 27G SO
 var SHEETS=Object.keys(DATA),idx=0,sc=0,sd=1,f1="",f2="",f3="",special="";
 
 function toggleMobSidebar(){
-  var sb=document.querySelector('.sidebar');
+  if(window.innerWidth>700){return;}
+  var drawer=document.getElementById('mob-drawer');
   var ov=document.getElementById('mob-overlay');
-  var isOpen=sb.classList.contains('mob-open');
-  if(isOpen){sb.classList.remove('mob-open');ov.classList.remove('open');}
-  else{sb.classList.add('mob-open');ov.classList.add('open');}
+  var dc=document.getElementById('mob-drawer-content');
+  // Clone sidebar content into drawer
+  dc.innerHTML=document.querySelector('.sidebar').innerHTML;
+  // Re-attach click events by re-running buildTree inside drawer
+  buildDrawerTree(dc);
+  drawer.classList.add('open');
+  ov.classList.add('open');
+}
+function closeMobDrawer(){
+  document.getElementById('mob-drawer').classList.remove('open');
+  document.getElementById('mob-overlay').classList.remove('open');
+}
+function buildDrawerTree(container){
+  // Re-render ATC tree inside drawer
+  var treeEl=container.querySelector('#atc-tree');
+  if(!treeEl) return;
+  var rows=DATA[SHEETS[idx]],tree={};
+  rows.forEach(function(r){var a1=r["ATC Nivel 1"]||"V - Varios",a2=r["ATC Nivel 2"]||"",a3=r["ATC Nivel 3"]||"";if(!tree[a1])tree[a1]={};if(!tree[a1][a2])tree[a1][a2]={};tree[a1][a2][a3]=true;});
+  treeEl.innerHTML="";
+  Object.keys(tree).sort().forEach(function(a1){
+    var wrap1=document.createElement("div");
+    var h1=document.createElement("div");h1.className="n1-header";
+    var arrow1=document.createElement("span");arrow1.className="n1-arrow";arrow1.innerHTML="&#9658;";
+    h1.innerHTML="<span>"+a1+"</span>";h1.appendChild(arrow1);
+    var b1=document.createElement("div");b1.className="n1-body";
+    h1.onclick=function(){special="";f1=(f1===a1?"":a1);f2="";f3="";buildTree();applyFilters();closeMobDrawer();};
+    Object.keys(tree[a1]).sort().forEach(function(a2){
+      var wrap2=document.createElement("div");
+      var h2=document.createElement("div");h2.className="n2-header";
+      var arrow2=document.createElement("span");arrow2.className="n2-arrow";arrow2.innerHTML="&#9658;";
+      h2.innerHTML="<span>"+a2+"</span>";h2.appendChild(arrow2);
+      var b2=document.createElement("div");b2.className="n2-body";
+      h2.onclick=function(e){e.stopPropagation();b2.style.display=b2.style.display==="block"?"none":"block";};
+      Object.keys(tree[a1][a2]).sort().forEach(function(a3){
+        var n3=document.createElement("div");n3.className="n3-item";n3.textContent=a3;
+        n3.onclick=function(e){e.stopPropagation();special="";f1=a1;f2=a2;f3=a3;buildTree();applyFilters();closeMobDrawer();};
+        b2.appendChild(n3);
+      });
+      wrap2.appendChild(h2);wrap2.appendChild(b2);b1.appendChild(wrap2);
+    });
+    wrap1.appendChild(h1);wrap1.appendChild(b1);treeEl.appendChild(wrap1);
+  });
+  // Re-attach special filter buttons
+  container.querySelectorAll("[id^=hdr-]").forEach(function(el){
+    var id=el.id.replace("hdr-","");
+    el.onclick=function(){setSpecialHeader(id,el);closeMobDrawer();};
+  });
+  container.querySelectorAll("[id^=btn-]").forEach(function(el){
+    var id=el.id.replace("btn-","");
+    el.onclick=function(){setSpecial(id);closeMobDrawer();};
+  });
+  container.querySelector(".s-reset").onclick=function(){resetAll();closeMobDrawer();};
 }
 function switchSheet(i){idx=i;sc=0;sd=1;f1="";f2="";f3="";special="";document.querySelectorAll(".tab").forEach(function(t,j){t.classList.toggle("active",j===i);});document.getElementById("search").value="";resetAll();}
 
-function resetAll(){f1="";f2="";f3="";special="";document.getElementById("search").value="";document.querySelectorAll(".n3-item").forEach(function(b){b.classList.remove("active");});document.querySelectorAll(".n1-header").forEach(function(h){if(h.id&&h.id.startsWith("hdr-"))h.style.fontWeight="700";});buildTree();applyFilters();if(window.innerWidth<=700){document.querySelector(".sidebar").classList.remove("mob-open");document.getElementById("mob-overlay").classList.remove("open");}}
+function resetAll(){f1="";f2="";f3="";special="";document.getElementById("search").value="";document.querySelectorAll(".n3-item").forEach(function(b){b.classList.remove("active");});document.querySelectorAll(".n1-header").forEach(function(h){if(h.id&&h.id.startsWith("hdr-"))h.style.fontWeight="700";});buildTree();applyFilters();closeMobDrawer();}
 
 function setSpecialHeader(s,el){special=(special===s?"":s);f1="";f2="";f3="";document.getElementById("search").value="";document.querySelectorAll(".n3-item").forEach(function(b){b.classList.remove("active");});buildTree();applyFilters();}
 
