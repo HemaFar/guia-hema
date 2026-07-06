@@ -227,9 +227,19 @@
     <h2><span class="num">2</span> Cadena de frío</h2>
     <div class="row">
       <div class="field">
-        <label>Nevera</label>
+        <label id="lblNevera1">Nevera</label>
         <input type="text" id="tNevera" placeholder="4.8" inputmode="decimal">
       </div>
+      <div class="field" id="fldNevera2" style="display:none">
+        <label>Nevera 2</label>
+        <input type="text" id="tNevera2" placeholder="4.9" inputmode="decimal">
+      </div>
+      <div class="field" id="fldNevera3" style="display:none">
+        <label>Nevera 3</label>
+        <input type="text" id="tNevera3" placeholder="5.0" inputmode="decimal">
+      </div>
+    </div>
+    <div class="row">
       <div class="field">
         <label>Área °C</label>
         <input type="text" id="tArea" placeholder="21.4" inputmode="decimal">
@@ -380,6 +390,11 @@ document.querySelectorAll('#areaSeg button').forEach(b=>{
     const isCx = state.area==='Cirugía';
     invCard.classList.toggle('hidden',!isCx);
     obsNum.textContent = isCx ? '6':'5';
+    // 3 neveras solo en Servicio Farmacéutico Central
+    const isCentral = state.area==='Servicio Farmacéutico Central';
+    document.getElementById('fldNevera2').style.display = isCentral ? '' : 'none';
+    document.getElementById('fldNevera3').style.display = isCentral ? '' : 'none';
+    document.getElementById('lblNevera1').textContent = isCentral ? 'Nevera 1' : 'Nevera';
     render();
   };
 });
@@ -446,7 +461,12 @@ function buildMessage(){
 
   // Cadena de frío
   L.push(`❄️ *CADENA DE FRÍO*`);
-  L.push(`Nevera: *${addUnit('tNevera','°C')}*  ·  Área: *${addUnit('tArea','°C')}*`);
+  if(state.area==='Servicio Farmacéutico Central'){
+    L.push(`Nevera 1: *${addUnit('tNevera','°C')}*  ·  Nevera 2: *${addUnit('tNevera2','°C')}*`);
+    L.push(`Nevera 3: *${addUnit('tNevera3','°C')}*  ·  Área: *${addUnit('tArea','°C')}*`);
+  } else {
+    L.push(`Nevera: *${addUnit('tNevera','°C')}*  ·  Área: *${addUnit('tArea','°C')}*`);
+  }
   L.push(`Humedad: *${addUnit('humedad','%')}*`);
 
   // Pacientes
