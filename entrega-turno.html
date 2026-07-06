@@ -231,7 +231,7 @@
         <input type="text" id="tNevera" placeholder="4.8" inputmode="decimal">
       </div>
       <div class="field" id="fldNevera2" style="display:none">
-        <label>Nevera 2</label>
+        <label>Nevera Central</label>
         <input type="text" id="tNevera2" placeholder="4.9" inputmode="decimal">
       </div>
       <div class="field" id="fldNevera3" style="display:none">
@@ -260,12 +260,15 @@
   <div class="card">
     <h2><span class="num">4</span> Novedades</h2>
     <div class="field">
-      <label>Eventualidades</label>
-      <div class="toggle" data-toggle="event">
+      <label>Pre-alta (no realizar cargos)</label>
+      <div class="toggle" data-toggle="prealta">
         <button data-val="No" class="no">No</button>
         <button data-val="Sí">Sí</button>
       </div>
-      <textarea id="eventDetalle" class="hidden" placeholder="Detalle de la eventualidad..."></textarea>
+      <div id="prealtaBox" class="hidden">
+        <div id="prealtaList"></div>
+        <button type="button" id="addPrealta" class="add-btn">+ Agregar paciente</button>
+      </div>
     </div>
     <div class="field">
       <label>Pendientes por cargos</label>
@@ -278,15 +281,23 @@
         <button type="button" id="addCargo" class="add-btn">+ Agregar pendiente</button>
       </div>
     </div>
+    <div class="field">
+      <label>Eventualidades</label>
+      <div class="toggle" data-toggle="event">
+        <button data-val="No" class="no">No</button>
+        <button data-val="Sí">Sí</button>
+      </div>
+      <textarea id="eventDetalle" class="hidden" placeholder="Detalle de la eventualidad..."></textarea>
+    </div>
   </div>
 
   <div class="card" id="invCard">
-    <h2><span class="num">5</span> Inventario Consignados <span style="color:var(--muted);font-weight:600;text-transform:none;letter-spacing:0">· solo Cirugía</span></h2>
+    <h2><span class="num">6</span> Inventario Consignados <span style="color:var(--muted);font-weight:600;text-transform:none;letter-spacing:0">· solo Cirugía</span></h2>
     <div id="invList"></div>
   </div>
 
   <div class="card">
-    <h2><span class="num" id="obsNum">5</span> Observaciones</h2>
+    <h2><span class="num">5</span> Observaciones</h2>
     <textarea id="obs" placeholder="Notas adicionales para el siguiente turno (opcional)"></textarea>
   </div>
 
@@ -317,7 +328,7 @@ const CONSIGNADOS = [
 ];
 
 const state = {
-  area:"", horario:"", event:"No", cargos:"No"
+  area:"", horario:"", event:"No", cargos:"No", prealta:"No"
 };
 let patients = [];
 
@@ -415,6 +426,49 @@ document.getElementById('addCargo').onclick=()=>{
 };
 renderCargos();
 
+// ---- pre-alta (lista)
+let prealtas = [];
+const prealtaList=document.getElementById('prealtaList');
+function renderPrealtas(){
+  prealtaList.innerHTML='';
+  if(prealtas.length===0){
+    const e=document.createElement('div');
+    e.className='pat-empty';
+    e.textContent='Sin pacientes agregados.';
+    prealtaList.appendChild(e);
+    return;
+  }
+  prealtas.forEach((p,i)=>{
+    const row=document.createElement('div');
+    row.className='pat-row';
+    row.innerHTML=`
+      <div class="pat-fields">
+        <div class="pat-top">
+          <input class="cama" type="text" inputmode="numeric" placeholder="Cama" value="${p.cama.replace(/"/g,'&quot;')}" data-ai="${i}" data-af="cama">
+          <input class="nombre" type="text" placeholder="Nombre" value="${p.nombre.replace(/"/g,'&quot;')}" data-ai="${i}" data-af="nombre">
+        </div>
+        <input type="text" placeholder="Notas" value="${p.nota.replace(/"/g,'&quot;')}" data-ai="${i}" data-af="nota">
+      </div>
+      <button type="button" class="del" data-dela="${i}" title="Quitar">×</button>`;
+    prealtaList.appendChild(row);
+  });
+  prealtaList.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input',e=>{
+      const i=+e.target.dataset.ai, f=e.target.dataset.af;
+      prealtas[i][f]=e.target.value;
+      render();
+    });
+  });
+  prealtaList.querySelectorAll('[data-dela]').forEach(b=>{
+    b.onclick=()=>{ prealtas.splice(+b.dataset.dela,1); renderPrealtas(); render(); };
+  });
+}
+document.getElementById('addPrealta').onclick=()=>{
+  prealtas.push({cama:'',nombre:'',nota:''});
+  renderPrealtas(); render();
+};
+renderPrealtas();
+
 // ---- horario selector
 document.querySelectorAll('#horarioSeg button').forEach(b=>{
   b.onclick=()=>{
@@ -427,7 +481,6 @@ document.querySelectorAll('#horarioSeg button').forEach(b=>{
 
 // ---- area selector
 const invCard=document.getElementById('invCard');
-const obsNum=document.getElementById('obsNum');
 document.querySelectorAll('#areaSeg button').forEach(b=>{
   b.onclick=()=>{
     document.querySelectorAll('#areaSeg button').forEach(x=>x.classList.remove('on'));
@@ -435,12 +488,11 @@ document.querySelectorAll('#areaSeg button').forEach(b=>{
     state.area=b.dataset.area;
     const isCx = state.area==='Cirugía';
     invCard.classList.toggle('hidden',!isCx);
-    obsNum.textContent = isCx ? '6':'5';
     // 3 neveras solo en Servicio Farmacéutico Central
     const isCentral = state.area==='Servicio Farmacéutico Central';
     document.getElementById('fldNevera2').style.display = isCentral ? '' : 'none';
     document.getElementById('fldNevera3').style.display = isCentral ? '' : 'none';
-    document.getElementById('lblNevera1').textContent = isCentral ? 'Nevera 1' : 'Nevera';
+    document.getElementById('lblNevera1').textContent = isCentral ? 'Nevera Grande' : 'Nevera';
     render();
   };
 });
@@ -459,6 +511,9 @@ document.querySelectorAll('[data-toggle]').forEach(group=>{
       if(key==='cargos'){
         document.getElementById('cargosBox').classList.toggle('hidden',!attention);
         if(!attention){ cargos.length=0; renderCargos(); }
+      } else if(key==='prealta'){
+        document.getElementById('prealtaBox').classList.toggle('hidden',!attention);
+        if(!attention){ prealtas.length=0; renderPrealtas(); }
       } else {
         const detalle=document.getElementById(map[key]);
         detalle.classList.toggle('hidden',!attention);
@@ -472,6 +527,7 @@ document.querySelectorAll('[data-toggle]').forEach(group=>{
 // preselect defaults visually
 document.querySelector('[data-toggle=event] [data-val="No"]').classList.add('no');
 document.querySelector('[data-toggle=cargos] [data-val="No"]').classList.add('no');
+document.querySelector('[data-toggle=prealta] [data-val="No"]').classList.add('no');
 
 // default date = today
 const t=new Date();
@@ -512,7 +568,7 @@ function buildMessage(){
   // Cadena de frío
   L.push(`❄️ *CADENA DE FRÍO*`);
   if(state.area==='Servicio Farmacéutico Central'){
-    L.push(`Nevera 1: *${addUnit('tNevera','°C')}*  ·  Nevera 2: *${addUnit('tNevera2','°C')}*`);
+    L.push(`Nevera Grande: *${addUnit('tNevera','°C')}*  ·  Nevera Central: *${addUnit('tNevera2','°C')}*`);
     L.push(`Nevera 3: *${addUnit('tNevera3','°C')}*  ·  Área: *${addUnit('tArea','°C')}*`);
   } else {
     L.push(`Nevera: *${addUnit('tNevera','°C')}*  ·  Área: *${addUnit('tArea','°C')}*`);
@@ -537,8 +593,25 @@ function buildMessage(){
   // Novedades
   L.push(DIV);
   L.push(`📋 *NOVEDADES*`);
-  const ev=state.event, evD=document.getElementById('eventDetalle').value.trim();
-  L.push(`Eventualidades: ${ev==='Sí' ? `*Sí* — ${evD||'—'}` : 'No'}`);
+
+  // Pre-alta (no realizar cargos)
+  const pa=state.prealta;
+  const validPre = prealtas.filter(p=>p.cama.trim()||p.nombre.trim()||p.nota.trim());
+  if(pa==='Sí' && validPre.length){
+    L.push(`Pre-alta (no realizar cargos): *Sí*`);
+    validPre.forEach(p=>{
+      const cama=p.cama.trim();
+      const nom=p.nombre.trim();
+      const nota=p.nota.trim();
+      let line = cama ? `${cama} · ${nom}` : `· ${nom}`;
+      if(nota) line += ` \`${nota}\``;
+      L.push(line);
+    });
+  } else {
+    L.push(`Pre-alta (no realizar cargos): ${pa==='Sí' ? '*Sí*' : 'No'}`);
+  }
+
+  // Pendientes por cargos
   const cg=state.cargos;
   const validCargos = cargos.filter(c=>c.cama.trim()||c.nombre.trim()||c.medicacion.trim());
   if(cg==='Sí' && validCargos.length){
@@ -554,6 +627,10 @@ function buildMessage(){
   } else {
     L.push(`Pendientes por cargos: ${cg==='Sí' ? '*Sí*' : 'No'}`);
   }
+
+  // Eventualidades
+  const ev=state.event, evD=document.getElementById('eventDetalle').value.trim();
+  L.push(`Eventualidades: ${ev==='Sí' ? `*Sí* — ${evD||'—'}` : 'No'}`);
 
   // Inventario (solo Cirugía)
   if(state.area==='Cirugía'){
