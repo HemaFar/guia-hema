@@ -296,6 +296,11 @@
     <div id="invList"></div>
   </div>
 
+  <div class="card" id="invEmergCard" style="display:none">
+    <h2><span class="num">6</span> Inventario Físico</h2>
+    <div id="invEmergList"></div>
+  </div>
+
   <div class="card">
     <h2><span class="num">5</span> Observaciones</h2>
     <textarea id="obs" placeholder="Notas adicionales para el siguiente turno (opcional)"></textarea>
@@ -340,6 +345,31 @@ CONSIGNADOS.forEach((name,i)=>{
   row.innerHTML=`<span>${name}</span><input type="number" inputmode="numeric" min="0" data-inv="${i}" placeholder="0">`;
   invList.appendChild(row);
 });
+
+// ---- inventario Físico (dinámico por área)
+const INV_FIS_EMERG_UCI = [
+  "Solución Salina 100","Solución Salina 250","Solución Salina 500",
+  "Solución Salina 1000","Tramadol 50mg/ml"
+];
+const INV_FIS_CX_CENTRAL = [
+  "Misoprostol 200mcg"
+];
+const INV_FIS_CX = [
+  "Misoprostol 200mcg","Tramadol 50mg/ml"
+];
+let INV_EMERG = []; // lista activa según área
+const invEmergList = document.getElementById('invEmergList');
+function buildInvFisico(){
+  invEmergList.innerHTML='';
+  INV_EMERG.forEach((name,i)=>{
+    const row=document.createElement('div');
+    row.className='inv-item';
+    row.innerHTML=`<span>${name}</span><input type="number" inputmode="numeric" min="0" data-invem="${i}" placeholder="0">`;
+    invEmergList.appendChild(row);
+  });
+  // re-enganchar listener de render a los nuevos inputs
+  invEmergList.querySelectorAll('input').forEach(el=>el.addEventListener('input',render));
+}
 
 // ---- patients
 const patList=document.getElementById('patList');
@@ -493,6 +523,21 @@ document.querySelectorAll('#areaSeg button').forEach(b=>{
     document.getElementById('fldNevera2').style.display = isCentral ? '' : 'none';
     document.getElementById('fldNevera3').style.display = isCentral ? '' : 'none';
     document.getElementById('lblNevera1').textContent = isCentral ? 'Nevera Grande' : 'Nevera';
+    // Inventario Físico: ítems según área
+    const invCardFis = document.getElementById('invEmergCard');
+    if(state.area==='Emergencia' || state.area==='UCI'){
+      INV_EMERG = INV_FIS_EMERG_UCI;
+      buildInvFisico(); invCardFis.style.display='';
+    } else if(isCx){
+      INV_EMERG = INV_FIS_CX;
+      buildInvFisico(); invCardFis.style.display='';
+    } else if(isCentral){
+      INV_EMERG = INV_FIS_CX_CENTRAL;
+      buildInvFisico(); invCardFis.style.display='';
+    } else {
+      INV_EMERG = [];
+      buildInvFisico(); invCardFis.style.display='none';
+    }
     render();
   };
 });
@@ -639,6 +684,17 @@ function buildMessage(){
     document.querySelectorAll('[data-inv]').forEach((inp,i)=>{
       const v=inp.value.trim();
       L.push(`${CONSIGNADOS[i]}: *${v===''?'0':v}*`);
+    });
+    L.push(`_Actualizado al ${fecha}_`);
+  }
+
+  // Inventario Físico (según área)
+  if(INV_EMERG.length){
+    L.push(DIV);
+    L.push(`📦 *INVENTARIO FÍSICO*`);
+    document.querySelectorAll('[data-invem]').forEach((inp,i)=>{
+      const v=inp.value.trim();
+      L.push(`${INV_EMERG[i]}: *${v===''?'0':v}*`);
     });
     L.push(`_Actualizado al ${fecha}_`);
   }
