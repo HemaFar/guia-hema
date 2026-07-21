@@ -95,6 +95,7 @@ td{padding:11px 16px;vertical-align:middle}
 .modal-dose h4{font-size:11px;font-weight:700;color:#2E7D32;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
 .modal-dose p{font-size:13px;color:#1B5E20;line-height:1.6}
 .mn-info2{cursor:pointer;font-size:15px;margin-left:4px;vertical-align:middle;display:inline-block;transition:transform .15s;line-height:1}
+.atc-icons{display:inline-flex;align-items:center;margin-top:4px;gap:4px}
 .mn-info2:hover{transform:scale(1.2)}
 mark{background:#FFF3B0;color:#1A1917;border-radius:2px;padding:0 1px}
 footer{text-align:center;padding:12px;font-size:11px;color:#AAAAA8;background:#F5F4F0;border-top:1px solid #E8E5DF}
@@ -104,9 +105,8 @@ footer{text-align:center;padding:12px;font-size:11px;color:#AAAAA8;background:#F
 }
 @media(max-width:700px){
   /* Layout */
-  .frame{margin:0;border-radius:0;border:none;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+  .frame{margin:0;border-radius:0;border:none}
   .sidebar{display:none!important}
-  .main{flex:1;overflow:hidden;display:flex;flex-direction:column}
 
   /* Header compacto */
   header{height:auto;padding:8px 12px;flex-wrap:wrap;gap:6px}
@@ -122,34 +122,40 @@ footer{text-align:center;padding:12px;font-size:11px;color:#AAAAA8;background:#F
   .sw{flex:1;min-width:0}
   .search{font-size:13px;padding:8px 10px 8px 30px;width:100%;box-sizing:border-box}
 
-  /* Tabla scroll horizontal */
-  .tbl-wrap{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}
-  table{font-size:12px;width:100%;min-width:320px}
-  thead th{padding:7px 8px;font-size:10px;white-space:nowrap}
-  td{padding:8px 8px;vertical-align:top}
+  /* Tabla con 2 columnas, nombre ancho y ATC estrecho */
+  table{font-size:12px;width:100%;table-layout:fixed}
+  thead th:first-child{width:62%}
+  thead th:last-child{width:38%}
+  thead th{padding:8px 8px;font-size:10px}
+  td{padding:9px 8px;vertical-align:top}
 
-  /* Nombre medicamento legible */
-  .mn{font-size:12px;line-height:1.4;word-break:break-word}
+  /* Nombre */
+  .mn{font-size:12px;line-height:1.4;word-break:break-word;display:block}
+  .flags{margin-top:4px}
+  .flag{font-size:8px;padding:1px 5px}
 
-  /* Badge ATC y flags más compactos */
-  .atc1-badge{font-size:9px;padding:3px 6px;white-space:normal;display:inline-block;max-width:80px;line-height:1.4;word-break:break-word;vertical-align:top}
-  .flag{font-size:8px;padding:1px 4px}
-  .flags{margin-top:3px}
-
-  /* Íconos más grandes para touch */
-  .mn-info{font-size:16px;margin-left:4px}
-  .mn-info2{font-size:16px;margin-left:3px}
+  /* Badge ATC en móvil: igual que PC pero texto corto */
+  .atc1-badge{
+    font-size:10px;
+    padding:3px 8px;
+    white-space:nowrap;
+    display:inline-block;
+    vertical-align:middle;
+  }
+  .mn-info{font-size:15px;vertical-align:middle;margin-left:0;margin-right:2px}
+  .mn-info2{font-size:15px;vertical-align:middle;margin-left:0;margin-right:2px}
+  .atc-icons-mob{display:none}
 
   /* Stats bar */
-  .statsbar{padding:4px 10px;font-size:10px}
+  .statsbar{padding:4px 10px;font-size:11px}
 
-  /* Modal fullscreen en móvil */
-  .modal-box{width:100%;max-width:100%;max-height:92vh;border-radius:16px 16px 0 0;position:fixed;bottom:0;left:0;right:0;margin:0}
+  /* Modal desde abajo */
+  .modal-box{width:100%;max-width:100%;max-height:92vh;border-radius:20px 20px 0 0;position:fixed;bottom:0;left:0;right:0;margin:0}
   .modal-overlay{align-items:flex-end}
-  .modal-header{padding:12px 16px}
+  .modal-header{padding:14px 16px}
   .modal-title{font-size:13px}
-  .modal-body{padding:14px;font-size:13px}
-  .modal-section p{font-size:13px;line-height:1.6}
+  .modal-body{padding:16px;font-size:13px}
+  .modal-section p{font-size:13px;line-height:1.7}
 }
 @media(max-width:400px){
   .tabs .tab{padding:5px 7px;font-size:11px}
@@ -431,6 +437,16 @@ function fetchMedInfo(nombre){
 }
 
 buildTree();renderTable();
+function applyMobBadge(){
+  if(window.innerWidth<=700){
+    document.querySelectorAll(".atc1-badge").forEach(function(el){
+      var s=el.getAttribute("data-short");
+      if(s) el.textContent=s;
+    });
+  }
+}
+applyMobBadge();
+window.addEventListener("resize",applyMobBadge);
 </script>
 </body>
 </html>
