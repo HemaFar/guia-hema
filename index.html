@@ -134,13 +134,17 @@ footer{text-align:center;padding:12px;font-size:11px;color:#AAAAA8;background:#F
   .flags{margin-top:4px}
   .flag{font-size:8px;padding:1px 5px}
 
-  /* Badge ATC en móvil: igual que PC pero texto corto */
+  /* Badge ATC en móvil: texto corto, no se sale de pantalla */
+  td:last-child{padding-right:10px}
   .atc1-badge{
     font-size:10px;
     padding:3px 8px;
     white-space:nowrap;
     display:inline-block;
     vertical-align:middle;
+    max-width:100%;
+    overflow:hidden;
+    text-overflow:ellipsis;
   }
   .mn-info{font-size:15px;vertical-align:middle;margin-left:0;margin-right:2px}
   .mn-info2{font-size:15px;vertical-align:middle;margin-left:0;margin-right:2px}
@@ -349,6 +353,11 @@ function buildTree(){
   });
 }
 
+var ATC_SHORT={"A - Tracto Alimentario / Metabolismo":"A - Alimentario","B - Sangre / Hematología":"B - Sangre","C - Sistema Cardiovascular":"C - Cardiovascular","D - Dermatológicos":"D - Dermatológicos","G - Genitourinario / Hormonas sexuales":"G - Genitourinario","H - Hormonas sistémicas":"H - Hormonas","J - Antiinfecciosos para uso sistémico":"J - Antiinfecciosos","M - Sistema Musculoesquelético":"M - Musculoesquelético","N - Sistema Nervioso":"N - S. Nervioso","P - Antiparasitarios":"P - Antiparasitarios","R - Sistema Respiratorio":"R - Respiratorio","S - Órganos de los sentidos":"S - Ó. Sentidos","V - Varios":"V - Varios"};
+function atcLabel(full){
+  if(window.innerWidth<=700 && ATC_SHORT[full]) return ATC_SHORT[full];
+  return full;
+}
 function renderTable(){
   var tr=document.getElementById("thead");tr.innerHTML="";
   ["Nombre guía","ATC Nivel 1"].forEach(function(x,i){
@@ -400,7 +409,7 @@ function applyFilters(){
     var dosisSafe=(row["dosis"]||"").replace(/'/g,"\'");
     td1.innerHTML="<span class='mn-info' onclick='openMedInfo(this)' data-med='"+nombreSafe2+"' title='Ver uso terapéutico'>&#128203;</span>"+
     (row["dosis"]?"<span class='mn-info2' onclick='openDoseInfo(this)' data-med='"+nombreSafe2+"' data-dosis='"+dosisSafe+"' title='Dosis Adulto / Niño'>"+(row["forma"]||"💊")+"</span> ":"")+
-    "<span class='atc1-badge'>"+hl(row["ATC Nivel 1"]||"",q)+"</span>";
+    "<span class='atc1-badge'>"+hl(atcLabel(row["ATC Nivel 1"]||""),q)+"</span>";
     tr.appendChild(td1);
     tbody.appendChild(tr);
   });
@@ -437,16 +446,7 @@ function fetchMedInfo(nombre){
 }
 
 buildTree();renderTable();
-function applyMobBadge(){
-  if(window.innerWidth<=700){
-    document.querySelectorAll(".atc1-badge").forEach(function(el){
-      var s=el.getAttribute("data-short");
-      if(s) el.textContent=s;
-    });
-  }
-}
-applyMobBadge();
-window.addEventListener("resize",applyMobBadge);
+window.addEventListener("resize",function(){renderTable();});
 </script>
 </body>
 </html>
