@@ -203,7 +203,7 @@
       <label>Farmacia / Área</label>
       <div class="seg" id="areaSeg">
         <button data-area="Emergencia">Emergencia</button>
-        <button data-area="UCI">UCI</button>
+        <button data-area="UCI Adulto">UCI Adulto</button>
         <button data-area="Cirugía">Cirugía</button>
         <button data-area="Servicio Farmacéutico Central">Serv. Farm. Central</button>
       </div>
@@ -525,7 +525,7 @@ document.querySelectorAll('#areaSeg button').forEach(b=>{
     document.getElementById('lblNevera1').textContent = isCentral ? 'Nevera Grande' : 'Nevera';
     // Inventario Físico: ítems según área
     const invCardFis = document.getElementById('invEmergCard');
-    if(state.area==='Emergencia' || state.area==='UCI'){
+    if(state.area==='Emergencia' || state.area==='UCI Adulto'){
       INV_EMERG = INV_FIS_EMERG_UCI;
       buildInvFisico(); invCardFis.style.display='';
     } else if(isCx){
@@ -639,43 +639,52 @@ function buildMessage(){
   L.push(DIV);
   L.push(`📋 *NOVEDADES*`);
 
-  // Pre-alta (no realizar cargos)
   const pa=state.prealta;
   const validPre = prealtas.filter(p=>p.cama.trim()||p.nombre.trim()||p.nota.trim());
-  if(pa==='Sí' && validPre.length){
-    L.push(`Pre-alta (no realizar cargos): *Sí*`);
-    validPre.forEach(p=>{
-      const cama=p.cama.trim();
-      const nom=p.nombre.trim();
-      const nota=p.nota.trim();
-      let line = cama ? `${cama} · ${nom}` : `· ${nom}`;
-      if(nota) line += ` \`${nota}\``;
-      L.push(line);
-    });
-  } else {
-    L.push(`Pre-alta (no realizar cargos): ${pa==='Sí' ? '*Sí*' : 'No'}`);
-  }
-
-  // Pendientes por cargos
   const cg=state.cargos;
   const validCargos = cargos.filter(c=>c.cama.trim()||c.nombre.trim()||c.medicacion.trim());
-  if(cg==='Sí' && validCargos.length){
-    L.push(`Pendientes por cargos: *Sí*`);
-    validCargos.forEach(c=>{
-      const cama=c.cama.trim();
-      const nom=c.nombre.trim();
-      const med=c.medicacion.trim();
-      let line = cama ? `${cama} · ${nom}` : `· ${nom}`;
-      if(med) line += ` \`${med}\``;
-      L.push(line);
-    });
-  } else {
-    L.push(`Pendientes por cargos: ${cg==='Sí' ? '*Sí*' : 'No'}`);
-  }
-
-  // Eventualidades
   const ev=state.event, evD=document.getElementById('eventDetalle').value.trim();
-  L.push(`Eventualidades: ${ev==='Sí' ? `*Sí* — ${evD||'—'}` : 'No'}`);
+
+  const hayNovedad = (pa==='Sí') || (cg==='Sí') || (ev==='Sí');
+
+  if(!hayNovedad){
+    L.push(`Sin novedades`);
+  } else {
+    // Pre-alta (no realizar cargos)
+    if(pa==='Sí' && validPre.length){
+      L.push(`Pre-alta (no realizar cargos): *Sí*`);
+      validPre.forEach(p=>{
+        const cama=p.cama.trim();
+        const nom=p.nombre.trim();
+        const nota=p.nota.trim();
+        let line = cama ? `${cama} · ${nom}` : `· ${nom}`;
+        if(nota) line += ` \`${nota}\``;
+        L.push(line);
+      });
+    } else if(pa==='Sí'){
+      L.push(`Pre-alta (no realizar cargos): *Sí*`);
+    }
+
+    // Pendientes por cargos
+    if(cg==='Sí' && validCargos.length){
+      L.push(`Pendientes por cargos: *Sí*`);
+      validCargos.forEach(c=>{
+        const cama=c.cama.trim();
+        const nom=c.nombre.trim();
+        const med=c.medicacion.trim();
+        let line = cama ? `${cama} · ${nom}` : `· ${nom}`;
+        if(med) line += ` \`${med}\``;
+        L.push(line);
+      });
+    } else if(cg==='Sí'){
+      L.push(`Pendientes por cargos: *Sí*`);
+    }
+
+    // Eventualidades
+    if(ev==='Sí'){
+      L.push(`Eventualidades: *Sí* — ${evD||'—'}`);
+    }
+  }
 
   // Inventario (solo Cirugía)
   if(state.area==='Cirugía'){
