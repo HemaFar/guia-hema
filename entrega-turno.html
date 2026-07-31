@@ -153,6 +153,20 @@
     border-radius:9px;cursor:pointer;
   }
   .pat-empty{font-size:13px;color:var(--muted);padding:6px 0}
+  .status{flex:1;min-width:0}
+  .fact-toggle{display:flex;gap:5px;flex:0 0 auto}
+  .factbtn{
+    font-size:12px;font-weight:600;padding:8px 9px;
+    border:1px solid var(--line);background:#f5f7f9;color:var(--muted);
+    border-radius:8px;cursor:pointer;white-space:nowrap;
+  }
+  .factbtn.on-yes{background:#e2ebf5;color:var(--accent);border-color:var(--accent)}
+  .factbtn.on-no{background:#f0eeea;color:var(--muted);border-color:var(--muted)}
+  .fact-warn{
+    font-size:12px;font-weight:600;color:var(--amber);
+    background:#f6ede1;border:1px solid #e6c9a3;
+    border-radius:8px;padding:7px 9px;margin-top:2px;
+  }
   .fab{
     position:fixed;left:0;right:0;bottom:0;
     background:linear-gradient(#eceef1cc,#eceef1);
@@ -376,6 +390,11 @@ function buildInvFisico(){
 
 // ---- patients
 const patList=document.getElementById('patList');
+function statusOptions(){
+  if(state.area==='Cirugía') return ['','Pre-Q','Post-Q','En Sala','Hospitalizado','Alta'];
+  if(state.area==='Emergencia') return ['','en BOX','Alta','Hospitalizado'];
+  return null;
+}
 function renderPatients(){
   patList.innerHTML='';
   if(patients.length===0){
@@ -385,33 +404,59 @@ function renderPatients(){
     patList.appendChild(e);
     return;
   }
+  const opts = statusOptions();
   patients.forEach((p,i)=>{
     const row=document.createElement('div');
     row.className='pat-row';
+    let extra='';
+    if(opts){
+      const optionsHtml = opts.map(o=>`<option value="${o}" ${p.status===o?'selected':''}>${o===''?'Status...':o}</option>`).join('');
+      extra=`
+        <div class="pat-top">
+          <select class="status" data-pi="${i}" data-pf="status">${optionsHtml}</select>
+          <div class="fact-toggle" data-pi="${i}">
+            <button type="button" class="factbtn ${p.facturado==='Sí'?'on-yes':''}" data-fv="Sí">Facturado: Sí</button>
+            <button type="button" class="factbtn ${p.facturado==='No'?'on-no':''}" data-fv="No">No</button>
+          </div>
+        </div>
+        ${p.facturado==='Sí' ? '<div class="fact-warn">📎 Recuerda enviar la constancia de facturación.</div>' : ''}`;
+    }
     row.innerHTML=`
       <div class="pat-fields">
         <div class="pat-top">
           <input class="cama" type="text" inputmode="numeric" placeholder="Cama" value="${p.cama.replace(/"/g,'&quot;')}" data-pi="${i}" data-pf="cama">
           <input class="nombre" type="text" placeholder="Nombre y apellido" value="${p.nombre.replace(/"/g,'&quot;')}" data-pi="${i}" data-pf="nombre">
         </div>
+        ${extra}
         <input type="text" placeholder="Notas" value="${p.nota.replace(/"/g,'&quot;')}" data-pi="${i}" data-pf="nota">
       </div>
       <button type="button" class="del" data-del="${i}" title="Quitar">×</button>`;
     patList.appendChild(row);
   });
-  patList.querySelectorAll('input').forEach(inp=>{
+  patList.querySelectorAll('input,select').forEach(inp=>{
     inp.addEventListener('input',e=>{
       const i=+e.target.dataset.pi, f=e.target.dataset.pf;
       patients[i][f]=e.target.value;
       render();
     });
   });
+  patList.querySelectorAll('.fact-toggle .factbtn').forEach(b=>{
+    b.onclick=()=>{
+      const i=+b.parentElement.dataset.pi;
+      const prev=patients[i].facturado;
+      patients[i].facturado=b.dataset.fv;
+      if(b.dataset.fv==='Sí' && prev!=='Sí'){
+        flash('📎 Recuerda enviar la constancia de facturación');
+      }
+      renderPatients(); render();
+    };
+  });
   patList.querySelectorAll('[data-del]').forEach(b=>{
     b.onclick=()=>{ patients.splice(+b.dataset.del,1); renderPatients(); render(); };
   });
 }
 document.getElementById('addPat').onclick=()=>{
-  patients.push({cama:'',nombre:'',nota:''});
+  patients.push({cama:'',nombre:'',nota:'',status:'',facturado:''});
   renderPatients(); render();
 };
 renderPatients();
@@ -526,6 +571,7 @@ document.querySelectorAll('#areaSeg button').forEach(b=>{
     document.getElementById('fldNevera2').style.display = isCentral ? '' : 'none';
     document.getElementById('fldNevera3').style.display = isCentral ? '' : 'none';
     document.getElementById('lblNevera1').textContent = isCentral ? 'Nevera Grande' : 'Nevera';
+    renderPatients();
     // Inventario Físico: ítems según área
     const invCardFis = document.getElementById('invEmergCard');
     if(state.area==='Emergencia' || state.area==='UCI Adulto'){
@@ -632,7 +678,11 @@ function buildMessage(){
       const cama=p.cama.trim();
       const nom=p.nombre.trim();
       const nota=p.nota.trim();
+      const status=(p.status||'').trim();
+      const fact=(p.facturado||'').trim();
       let line = cama ? `${cama} · ${nom}` : `· ${nom}`;
+      if(status) line += ` — ${status}`;
+      if(fact) line += ` | Fact: ${fact}`;
       if(nota) line += ` \`${nota}\``;
       L.push(line);
     });
@@ -733,6 +783,14 @@ document.getElementById('copyBtn').onclick=async()=>{
   catch(e){
     const ta=document.createElement('textarea');ta.value=msg;document.body.appendChild(ta);
     ta.select();document.execCommand('copy');ta.remove();
+  }
+  // Recordatorio de constancias (solo Cirugía y Emergencia)
+  if(state.area==='Cirugía' || state.area==='Emergencia'){
+    const facturados = patients.filter(p=>p.facturado==='Sí' && (p.cama.trim()||p.nombre.trim()));
+    if(facturados.length){
+      const lista = facturados.map(p=>p.cama.trim() ? `cama ${p.cama.trim()}` : p.nombre.trim()).join(', ');
+      alert('📎 No olvides adjuntar en WhatsApp las constancias de facturación de:\n\n'+lista);
+    }
   }
   flash("Copiado ✓  Pégalo en WhatsApp");
 };
