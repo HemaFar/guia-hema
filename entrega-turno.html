@@ -388,7 +388,11 @@ CONSIGNADOS.forEach((name,i)=>{
 });
 
 // ---- inventario Físico (dinámico por área)
-const INV_FIS_EMERG_UCI = [
+const INV_FIS_EMERG = [
+  "Solución Salina 100","Solución Salina 250","Solución Salina 500",
+  "Solución Salina 1000","Tramadol 50mg/ml","Midazolam 15mg/3ml"
+];
+const INV_FIS_UCI = [
   "Solución Salina 100","Solución Salina 250","Solución Salina 500",
   "Solución Salina 1000","Tramadol 50mg/ml"
 ];
@@ -598,8 +602,11 @@ document.querySelectorAll('#areaSeg button').forEach(b=>{
     renderPatients();
     // Inventario Físico: ítems según área
     const invCardFis = document.getElementById('invEmergCard');
-    if(state.area==='Emergencia' || state.area==='UCI Adulto'){
-      INV_EMERG = INV_FIS_EMERG_UCI;
+    if(state.area==='Emergencia'){
+      INV_EMERG = INV_FIS_EMERG;
+      buildInvFisico(); invCardFis.style.display='';
+    } else if(state.area==='UCI Adulto'){
+      INV_EMERG = INV_FIS_UCI;
       buildInvFisico(); invCardFis.style.display='';
     } else if(isCx){
       INV_EMERG = INV_FIS_CX;
