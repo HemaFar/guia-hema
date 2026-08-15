@@ -172,6 +172,17 @@
     border-radius:9px;cursor:pointer;
   }
   .pat-empty{font-size:13px;color:var(--muted);padding:6px 0}
+  .sub-grupo{
+    font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--accent);margin:16px 0 6px;
+  }
+  .sub-sec{
+    border:1px solid var(--line);border-radius:10px;
+    padding:10px;margin-bottom:10px;background:#fafbfc;
+  }
+  .sub-title{
+    font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px;
+  }
   .status{flex:1;min-width:0}
   .fact-toggle{display:flex;gap:5px;flex:0 0 auto}
   .factbtn{
@@ -259,6 +270,10 @@
         </div>
       </div>
     </div>
+    <div class="field">
+      <label>Entrega turno</label>
+      <input type="text" id="entregaPersona" placeholder="Nombre y apellido">
+    </div>
   </div>
 
   <div class="card">
@@ -293,6 +308,7 @@
     <h2><span class="num">3</span> Pacientes</h2>
     <div id="patList"></div>
     <button type="button" id="addPat" class="add-btn">+ Agregar paciente</button>
+    <div id="centralSubs" style="display:none"></div>
   </div>
 
   <div class="card">
@@ -489,6 +505,96 @@ document.getElementById('addPat').onclick=()=>{
 };
 renderPatients();
 
+// ---- Central: sub-secciones por UCI / Hospitalización
+const CENTRAL_SECS = [
+  {key:'UCIAD', grupo:'PERSONA A — UCIs'},
+  {key:'UCIN', grupo:''},
+  {key:'UCIPED', grupo:''},
+  {key:'Neonatal', grupo:''},
+  {key:'Hospitalización 4ta', grupo:'PERSONA B'}
+];
+// Camas por sección: array de opciones. Si no está definida, la cama es texto libre.
+const CAMAS_SEC = {
+  'UCIN': ['UCI Neo 1','UCI Neo 2','UCI Neo 3','UCI Neo 4'],
+  'UCIPED': ['UCIP1','UCIP2','UCIP3','UCIP4'],
+  'Neonatal': ['Neo1','Neo2','Neo3','Neo4','Neo5','Neo6'],
+  'Hospitalización 4ta': Array.from({length:45},(_,k)=>String(401+k))
+};
+const centralPats = {}; // {UCIAD:[...], UCIN:[...], ...}
+CENTRAL_SECS.forEach(s=>centralPats[s.key]=[]);
+const centralSubs = document.getElementById('centralSubs');
+
+function renderCentralSubs(){
+  centralSubs.innerHTML='';
+  CENTRAL_SECS.forEach(sec=>{
+    if(sec.grupo){
+      const g=document.createElement('div');
+      g.className='sub-grupo';
+      g.textContent=sec.grupo;
+      centralSubs.appendChild(g);
+    }
+    const wrap=document.createElement('div');
+    wrap.className='sub-sec';
+    const title=document.createElement('div');
+    title.className='sub-title';
+    title.textContent=sec.key;
+    wrap.appendChild(title);
+    const listBox=document.createElement('div');
+    const arr=centralPats[sec.key];
+    if(arr.length===0){
+      const e=document.createElement('div');
+      e.className='pat-empty';
+      e.textContent='Sin pacientes.';
+      listBox.appendChild(e);
+    } else {
+      arr.forEach((p,i)=>{
+        const row=document.createElement('div');
+        row.className='pat-row';
+        let camaField;
+        if(CAMAS_SEC[sec.key]){
+          const opts = ['<option value="">Cama...</option>'];
+          CAMAS_SEC[sec.key].forEach(c=>{
+            opts.push(`<option value="${c}" ${p.cama===String(c)?'selected':''}>${c}</option>`);
+          });
+          camaField=`<select class="cama status" data-sk="${sec.key}" data-si="${i}" data-sf="cama">${opts.join('')}</select>`;
+        } else {
+          camaField=`<input class="cama" type="text" inputmode="numeric" placeholder="Cama" value="${p.cama.replace(/"/g,'&quot;')}" data-sk="${sec.key}" data-si="${i}" data-sf="cama">`;
+        }
+        row.innerHTML=`
+          <div class="pat-fields">
+            <div class="pat-top">
+              ${camaField}
+              <input class="nombre" type="text" placeholder="Nombre y apellido" value="${p.nombre.replace(/"/g,'&quot;')}" data-sk="${sec.key}" data-si="${i}" data-sf="nombre">
+            </div>
+            <input type="text" placeholder="Notas" value="${p.nota.replace(/"/g,'&quot;')}" data-sk="${sec.key}" data-si="${i}" data-sf="nota">
+          </div>
+          <button type="button" class="del" data-delsk="${sec.key}" data-delsi="${i}" title="Quitar">×</button>`;
+        listBox.appendChild(row);
+      });
+    }
+    wrap.appendChild(listBox);
+    const addBtn=document.createElement('button');
+    addBtn.type='button';
+    addBtn.className='add-btn';
+    addBtn.textContent='+ Agregar paciente';
+    addBtn.onclick=()=>{ centralPats[sec.key].push({cama:'',nombre:'',nota:''}); renderCentralSubs(); render(); };
+    wrap.appendChild(addBtn);
+    centralSubs.appendChild(wrap);
+  });
+  // listeners
+  centralSubs.querySelectorAll('input,select').forEach(inp=>{
+    inp.addEventListener('input',e=>{
+      const k=e.target.dataset.sk, i=+e.target.dataset.si, f=e.target.dataset.sf;
+      centralPats[k][i][f]=e.target.value;
+      render();
+    });
+  });
+  centralSubs.querySelectorAll('[data-delsk]').forEach(b=>{
+    b.onclick=()=>{ centralPats[b.dataset.delsk].splice(+b.dataset.delsi,1); renderCentralSubs(); render(); };
+  });
+}
+renderCentralSubs();
+
 // ---- pendientes por cargos (lista)
 let cargos = [];
 const cargoList=document.getElementById('cargoList');
@@ -599,7 +705,12 @@ document.querySelectorAll('#areaSeg button').forEach(b=>{
     document.getElementById('fldNevera2').style.display = isCentral ? '' : 'none';
     document.getElementById('fldNevera3').style.display = isCentral ? '' : 'none';
     document.getElementById('lblNevera1').textContent = isCentral ? 'Nevera Grande' : 'Nevera';
+    // Central: sub-secciones por UCI/Hospitalización; otras áreas: lista normal
+    document.getElementById('patList').style.display = isCentral ? 'none' : '';
+    document.getElementById('addPat').style.display = isCentral ? 'none' : '';
+    document.getElementById('centralSubs').style.display = isCentral ? '' : 'none';
     renderPatients();
+    renderCentralSubs();
     // Inventario Físico: ítems según área
     const invCardFis = document.getElementById('invEmergCard');
     if(state.area==='Emergencia'){
@@ -688,35 +799,71 @@ function buildMessage(){
   L.push(`📌 *ENTREGA DE TURNO*`);
   L.push(`📍 Área: *${area}*`);
   L.push(`📅 ${fecha}   ⏰ ${horario}`);
+  const entregaP=document.getElementById('entregaPersona').value.trim();
+  if(entregaP) L.push(`👤 Entrega: *${entregaP}*`);
   L.push(DIV);
 
-  // Cadena de frío
-  L.push(`❄️ *CADENA DE FRÍO*`);
-  if(state.area==='Servicio Farmacéutico Central'){
-    L.push(`Nevera Grande: *${addUnit('tNevera','°C')}*  ·  Nevera Central: *${addUnit('tNevera2','°C')}*`);
-    L.push(`Nevera 3: *${addUnit('tNevera3','°C')}*  ·  Área: *${addUnit('tArea','°C')}*`);
-  } else {
-    L.push(`Nevera: *${addUnit('tNevera','°C')}*  ·  Área: *${addUnit('tArea','°C')}*`);
+  // Cadena de frío (ocultar si todos los campos vacíos)
+  const frioIds = ['tNevera','tNevera2','tNevera3','tArea','humedad'];
+  const hayFrio = frioIds.some(id=>{
+    const el=document.getElementById(id);
+    return el && el.value.trim()!=='';
+  });
+  if(hayFrio){
+    L.push(`❄️ *CADENA DE FRÍO*`);
+    if(state.area==='Servicio Farmacéutico Central'){
+      L.push(`Nevera Grande: *${addUnit('tNevera','°C')}*  ·  Nevera Central: *${addUnit('tNevera2','°C')}*`);
+      L.push(`Nevera 3: *${addUnit('tNevera3','°C')}*  ·  Área: *${addUnit('tArea','°C')}*`);
+    } else {
+      L.push(`Nevera: *${addUnit('tNevera','°C')}*  ·  Área: *${addUnit('tArea','°C')}*`);
+    }
+    L.push(`Humedad: *${addUnit('humedad','%')}*`);
   }
-  L.push(`Humedad: *${addUnit('humedad','%')}*`);
 
   // Pacientes
-  const validPats = patients.filter(p=>p.cama.trim()||p.nombre.trim());
-  if(validPats.length){
-    L.push(DIV);
-    L.push(`👤 *PACIENTES*`);
-    validPats.forEach(p=>{
-      const cama=p.cama.trim();
-      const nom=p.nombre.trim();
-      const nota=p.nota.trim();
-      const status=(p.status||'').trim();
-      const fact=(p.facturado||'').trim();
-      let line = cama ? `${cama} · ${nom}` : `· ${nom}`;
-      if(status) line += ` — ${status}`;
-      if(fact) line += ` | Fact: ${fact}`;
-      if(nota) line += ` \`${nota}\``;
-      L.push(line);
+  if(state.area==='Servicio Farmacéutico Central'){
+    // sub-secciones por UCI / Hospitalización
+    let anyPat=false;
+    CENTRAL_SECS.forEach(sec=>{
+      const arr=centralPats[sec.key].filter(p=>p.cama.trim()||p.nombre.trim());
+      if(arr.length) anyPat=true;
     });
+    if(anyPat){
+      L.push(DIV);
+      L.push(`👤 *PACIENTES*`);
+      CENTRAL_SECS.forEach(sec=>{
+        const arr=centralPats[sec.key].filter(p=>p.cama.trim()||p.nombre.trim());
+        if(arr.length){
+          L.push(`*▪️ ${sec.key.toUpperCase()}*`);
+          arr.forEach(p=>{
+            const cama=p.cama.trim();
+            const nom=p.nombre.trim();
+            const nota=p.nota.trim();
+            let line = cama ? `${cama} · ${nom}` : `· ${nom}`;
+            if(nota) line += ` \`${nota}\``;
+            L.push(line);
+          });
+        }
+      });
+    }
+  } else {
+    const validPats = patients.filter(p=>p.cama.trim()||p.nombre.trim());
+    if(validPats.length){
+      L.push(DIV);
+      L.push(`👤 *PACIENTES*`);
+      validPats.forEach(p=>{
+        const cama=p.cama.trim();
+        const nom=p.nombre.trim();
+        const nota=p.nota.trim();
+        const status=(p.status||'').trim();
+        const fact=(p.facturado||'').trim();
+        let line = cama ? `${cama} · ${nom}` : `· ${nom}`;
+        if(status) line += ` — ${status}`;
+        if(fact) line += ` | Fact: ${fact}`;
+        if(nota) line += ` \`${nota}\``;
+        L.push(line);
+      });
+    }
   }
 
   // Novedades
@@ -770,26 +917,34 @@ function buildMessage(){
     }
   }
 
-  // Inventario (solo Cirugía)
+  // Inventario Consignados (solo Cirugía) — ocultar si todo vacío
   if(state.area==='Cirugía'){
-    L.push(DIV);
-    L.push(`📦 *INVENTARIO CONSIGNADOS*`);
-    document.querySelectorAll('[data-inv]').forEach((inp,i)=>{
-      const v=inp.value.trim();
-      L.push(`${CONSIGNADOS[i]}: *${v===''?'0':v}*`);
-    });
-    L.push(`_Actualizado al ${fecha}_`);
+    const inputs=[...document.querySelectorAll('[data-inv]')];
+    const hayAlgo=inputs.some(inp=>inp.value.trim()!=='');
+    if(hayAlgo){
+      L.push(DIV);
+      L.push(`📦 *INVENTARIO CONSIGNADOS*`);
+      inputs.forEach((inp,i)=>{
+        const v=inp.value.trim();
+        L.push(`${CONSIGNADOS[i]}: *${v===''?'0':v}*`);
+      });
+      L.push(`_Actualizado al ${fecha}_`);
+    }
   }
 
-  // Inventario Físico (según área)
+  // Inventario Físico (según área) — ocultar si todo vacío
   if(INV_EMERG.length){
-    L.push(DIV);
-    L.push(`📦 *INVENTARIO FÍSICO*`);
-    document.querySelectorAll('[data-invem]').forEach((inp,i)=>{
-      const v=inp.value.trim();
-      L.push(`${INV_EMERG[i]}: *${v===''?'0':v}*`);
-    });
-    L.push(`_Actualizado al ${fecha}_`);
+    const inputs=[...document.querySelectorAll('[data-invem]')];
+    const hayAlgo=inputs.some(inp=>inp.value.trim()!=='');
+    if(hayAlgo){
+      L.push(DIV);
+      L.push(`📦 *INVENTARIO FÍSICO*`);
+      inputs.forEach((inp,i)=>{
+        const v=inp.value.trim();
+        L.push(`${INV_EMERG[i]}: *${v===''?'0':v}*`);
+      });
+      L.push(`_Actualizado al ${fecha}_`);
+    }
   }
 
   // Observaciones
