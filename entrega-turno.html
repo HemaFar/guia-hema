@@ -197,6 +197,10 @@
     background:#f6ede1;border:1px solid #e6c9a3;
     border-radius:8px;padding:7px 9px;margin-top:2px;
   }
+  .ars-falta{
+    border-color:var(--danger) !important;
+    background:#fbeceb !important;
+  }
   .fab{
     position:fixed;left:0;right:0;bottom:0;
     background:linear-gradient(#eceef1cc,#eceef1);
@@ -406,18 +410,19 @@ CONSIGNADOS.forEach((name,i)=>{
 // ---- inventario Físico (dinámico por área)
 const INV_FIS_EMERG = [
   "Solución Salina 100","Solución Salina 250","Solución Salina 500",
-  "Solución Salina 1000","Tramadol 50mg/ml","Midazolam 15mg/3ml",
+  "Solución Salina 1000","Tramadol 100mg (50mg/ml) 2ml","Midazolam 15mg/3ml",
   "Fentanilo 0.005mg/ml 2ml","Diazepam 10mg/2ml"
 ];
 const INV_FIS_UCI = [
   "Solución Salina 100","Solución Salina 250","Solución Salina 500",
-  "Solución Salina 1000","Tramadol 50mg/ml"
+  "Solución Salina 1000","Tramadol 100mg (50mg/ml) 2ml","Midazolam 50mg/10ml",
+  "Fentanilo 0.05mg/ml 10ml","Diazepam 10mg/2ml"
 ];
 const INV_FIS_CX_CENTRAL = [
   "Misoprostol 200mcg"
 ];
 const INV_FIS_CX = [
-  "Misoprostol 200mcg","Tramadol 50mg/ml"
+  "Misoprostol 200mcg","Tramadol 100mg (50mg/ml) 2ml"
 ];
 let INV_EMERG = []; // lista activa según área
 const invEmergList = document.getElementById('invEmergList');
@@ -473,6 +478,7 @@ function renderPatients(){
           <input class="nombre" type="text" placeholder="Nombre y apellido" value="${p.nombre.replace(/"/g,'&quot;')}" data-pi="${i}" data-pf="nombre">
         </div>
         ${extra}
+        ${state.area==='UCI Adulto' ? `<input type="text" placeholder="ARS (obligatoria)" value="${(p.ars||'').replace(/"/g,'&quot;')}" data-pi="${i}" data-pf="ars" class="${p.nombre.trim() && !(p.ars||'').trim() ? 'ars-falta' : ''}">` : ''}
         <input type="text" placeholder="Notas" value="${p.nota.replace(/"/g,'&quot;')}" data-pi="${i}" data-pf="nota">
       </div>
       <button type="button" class="del" data-del="${i}" title="Quitar">×</button>`;
@@ -501,7 +507,7 @@ function renderPatients(){
   });
 }
 document.getElementById('addPat').onclick=()=>{
-  patients.push({cama:'',nombre:'',nota:'',status:'',facturado:''});
+  patients.push({cama:'',nombre:'',nota:'',status:'',facturado:'',ars:''});
   renderPatients(); render();
 };
 renderPatients();
@@ -858,8 +864,10 @@ function buildMessage(){
         const nota=p.nota.trim();
         const status=(p.status||'').trim();
         const fact=(p.facturado||'').trim();
+        const ars=(p.ars||'').trim();
         let line = cama ? `${cama} · ${nom}` : `· ${nom}`;
         if(status) line += ` — ${status}`;
+        if(ars) line += ` | ARS: ${ars}`;
         if(fact) line += ` | Fact: ${fact}`;
         if(nota) line += ` \`${nota}\``;
         L.push(line);
@@ -965,6 +973,15 @@ function render(){ document.getElementById('preview').textContent=buildMessage()
 // ---- copy
 document.getElementById('copyBtn').onclick=async()=>{
   if(!state.area){ flash("Selecciona un área primero"); return; }
+  // ARS obligatoria en UCI Adulto si el paciente tiene nombre
+  if(state.area==='UCI Adulto'){
+    const faltanArs = patients.filter(p=>p.nombre.trim() && !(p.ars||'').trim());
+    if(faltanArs.length){
+      const lista = faltanArs.map(p=>p.cama.trim()?`cama ${p.cama.trim()} (${p.nombre.trim()})`:p.nombre.trim()).join('\n');
+      alert('⚠️ Falta la ARS de:\n\n'+lista+'\n\nComplétala antes de copiar el reporte.');
+      return;
+    }
+  }
   const msg=buildMessage();
   try{ await navigator.clipboard.writeText(msg); }
   catch(e){
