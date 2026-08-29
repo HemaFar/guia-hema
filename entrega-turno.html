@@ -932,6 +932,24 @@ document.getElementById('copyBtn').onclick=async()=>{
       return;
     }
   }
+  // Inventario: todos los ítems visibles deben tener un valor (aunque sea 0)
+  const invVacios = [];
+  // Consignados (solo Cirugía)
+  if(state.area==='Cirugía'){
+    document.querySelectorAll('[data-inv]').forEach((inp,i)=>{
+      if(inp.value.trim()==='') invVacios.push(CONSIGNADOS[i]);
+    });
+  }
+  // Inventario Físico (según área)
+  if(INV_EMERG.length){
+    document.querySelectorAll('[data-invem]').forEach((inp,i)=>{
+      if(inp.value.trim()==='') invVacios.push(INV_EMERG[i]);
+    });
+  }
+  if(invVacios.length){
+    alert('⚠️ Completa el inventario. Faltan (pon 0 si no hay):\n\n'+invVacios.join('\n'));
+    return;
+  }
   const msg=buildMessage();
   try{ await navigator.clipboard.writeText(msg); }
   catch(e){
