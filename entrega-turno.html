@@ -262,10 +262,7 @@
       </div>
     </div>
     <div class="row">
-      <div class="field">
-        <label>Fecha</label>
-        <input type="date" id="fecha">
-      </div>
+      <input type="date" id="fecha" style="display:none">
       <div class="field">
         <label>Horario</label>
         <div class="toggle" id="horarioSeg">
@@ -310,6 +307,16 @@
 
   <div class="card" id="patCard">
     <h2><span class="num">3</span> Pacientes</h2>
+    <div id="emergCounts" class="row" style="display:none">
+      <div class="field">
+        <label>Pacientes atendidos</label>
+        <input type="text" id="emergAtendidos" placeholder="0" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label>Pacientes ingresados</label>
+        <input type="text" id="emergIngresados" placeholder="0" inputmode="numeric">
+      </div>
+    </div>
     <div id="patList"></div>
     <button type="button" id="addPat" class="add-btn">+ Agregar paciente</button>
     <div id="centralSubs" style="display:none"></div>
@@ -409,17 +416,16 @@ CONSIGNADOS.forEach((name,i)=>{
 
 // ---- inventario Físico (dinámico por área)
 const INV_FIS_EMERG = [
-  "Solución Salina 100","Solución Salina 250","Solución Salina 500",
-  "Solución Salina 1000","Tramadol 100mg (50mg/ml) 2ml","Midazolam 15mg/3ml",
-  "Fentanilo 0.005mg/ml 2ml","Diazepam 10mg/2ml"
+  "Solución Salina 100","Tramadol 100mg (50mg/ml) 2ml","Midazolam 15mg/3ml",
+  "Fentanilo 0.005mg/ml 2ml","Diazepam 10mg/2ml",
+  "Tenecteplasa 50mg ampolla (Metalyse)"
 ];
 const INV_FIS_UCI = [
-  "Solución Salina 100","Solución Salina 250","Solución Salina 500",
-  "Solución Salina 1000","Tramadol 100mg (50mg/ml) 2ml","Midazolam 50mg/10ml",
+  "Solución Salina 100","Tramadol 100mg (50mg/ml) 2ml","Midazolam 50mg/10ml",
   "Fentanilo 0.05mg/ml 10ml","Diazepam 10mg/2ml","Remifentanilo 5mg/10ml"
 ];
 const INV_FIS_CX_CENTRAL = [
-  "Misoprostol 200mcg"
+  "Misoprostol 200mcg","Tenecteplasa 50mg ampolla (Metalyse)"
 ];
 const INV_FIS_CX = [
   "Misoprostol 200mcg","Tramadol 100mg (50mg/ml) 2ml"
@@ -716,6 +722,7 @@ document.querySelectorAll('#areaSeg button').forEach(b=>{
     document.getElementById('patList').style.display = isCentral ? 'none' : '';
     document.getElementById('addPat').style.display = isCentral ? 'none' : '';
     document.getElementById('centralSubs').style.display = isCentral ? '' : 'none';
+    document.getElementById('emergCounts').style.display = (state.area==='Emergencia' || state.area==='Cirugía') ? '' : 'none';
     renderPatients();
     renderCentralSubs();
     // Inventario Físico: ítems según área
@@ -855,9 +862,16 @@ function buildMessage(){
     }
   } else {
     const validPats = patients.filter(p=>p.cama.trim()||p.nombre.trim());
-    if(validPats.length){
+    const conteoArea = (state.area==='Emergencia' || state.area==='Cirugía');
+    const atendidos = conteoArea ? document.getElementById('emergAtendidos').value.trim() : '';
+    const ingresados = conteoArea ? document.getElementById('emergIngresados').value.trim() : '';
+    const hayConteo = atendidos!=='' || ingresados!=='';
+    if(validPats.length || hayConteo){
       L.push(DIV);
       L.push(`👤 *PACIENTES*`);
+      if(conteoArea && hayConteo){
+        L.push(`Atendidos: *${atendidos||'0'}*  ·  Ingresados: *${ingresados||'0'}*`);
+      }
       validPats.forEach(p=>{
         const cama=p.cama.trim();
         const nom=p.nombre.trim();
@@ -876,9 +890,6 @@ function buildMessage(){
   }
 
   // Novedades
-  L.push(DIV);
-  L.push(`📋 *NOVEDADES*`);
-
   const pa=state.prealta;
   const validPre = prealtas.filter(p=>p.cama.trim()||p.nombre.trim()||p.nota.trim());
   const cg=state.cargos;
@@ -887,9 +898,10 @@ function buildMessage(){
 
   const hayNovedad = (pa==='Sí') || (cg==='Sí') || (ev==='Sí');
 
-  if(!hayNovedad){
-    L.push(`Sin novedades`);
-  } else {
+  if(hayNovedad){
+    L.push(DIV);
+    L.push(`📋 *NOVEDADES*`);
+    {
     // Pre-alta (no realizar cargos)
     if(pa==='Sí' && validPre.length){
       L.push(`Pre-alta (no realizar cargos): *Sí*`);
@@ -923,6 +935,7 @@ function buildMessage(){
     // Eventualidades
     if(ev==='Sí'){
       L.push(`Eventualidades: *Sí* — ${evD||'—'}`);
+    }
     }
   }
 
@@ -979,6 +992,24 @@ document.getElementById('copyBtn').onclick=async()=>{
     if(faltanArs.length){
       const lista = faltanArs.map(p=>p.cama.trim()?`cama ${p.cama.trim()} (${p.nombre.trim()})`:p.nombre.trim()).join('\n');
       alert('⚠️ Falta la ARS de:\n\n'+lista+'\n\nComplétala antes de copiar el reporte.');
+      return;
+    }
+  }
+  // En Cirugía y Emergencia: si hay nombre, cama/status/facturado son obligatorios (notas no)
+  if(state.area==='Cirugía' || state.area==='Emergencia'){
+    const incompletos = patients.filter(p=>{
+      if(!p.nombre.trim()) return false;
+      return !p.cama.trim() || !(p.status||'').trim() || !(p.facturado||'').trim();
+    });
+    if(incompletos.length){
+      const lista = incompletos.map(p=>{
+        const falta=[];
+        if(!p.cama.trim()) falta.push('cama');
+        if(!(p.status||'').trim()) falta.push('status');
+        if(!(p.facturado||'').trim()) falta.push('facturado');
+        return `${p.nombre.trim()}: falta ${falta.join(', ')}`;
+      }).join('\n');
+      alert('⚠️ Completa los datos de estos pacientes:\n\n'+lista+'\n\n(Las notas son opcionales.)');
       return;
     }
   }
