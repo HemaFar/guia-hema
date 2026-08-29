@@ -325,17 +325,6 @@
   <div class="card">
     <h2><span class="num">4</span> Novedades</h2>
     <div class="field">
-      <label>Pre-alta (no realizar cargos)</label>
-      <div class="toggle" data-toggle="prealta">
-        <button data-val="No" class="no">No</button>
-        <button data-val="Sí">Sí</button>
-      </div>
-      <div id="prealtaBox" class="hidden">
-        <div id="prealtaList"></div>
-        <button type="button" id="addPrealta" class="add-btn">+ Agregar paciente</button>
-      </div>
-    </div>
-    <div class="field">
       <label>Pendientes por cargos</label>
       <div class="toggle" data-toggle="cargos">
         <button data-val="No" class="no">No</button>
@@ -364,11 +353,6 @@
   <div class="card" id="invEmergCard" style="display:none">
     <h2><span class="num">6</span> Inventario Físico</h2>
     <div id="invEmergList"></div>
-  </div>
-
-  <div class="card">
-    <h2><span class="num">5</span> Observaciones</h2>
-    <textarea id="obs" placeholder="Notas adicionales para el siguiente turno (opcional)"></textarea>
   </div>
 
   <div class="card">
@@ -401,7 +385,7 @@ const CONSIGNADOS = [
 ];
 
 const state = {
-  area:"", horario:"", event:"No", cargos:"No", prealta:"No"
+  area:"", horario:"", event:"No", cargos:"No"
 };
 let patients = [];
 
@@ -428,7 +412,7 @@ const INV_FIS_CX_CENTRAL = [
   "Misoprostol 200mcg","Tenecteplasa 50mg ampolla (Metalyse)"
 ];
 const INV_FIS_CX = [
-  "Misoprostol 200mcg","Tramadol 100mg (50mg/ml) 2ml"
+  "Misoprostol 200mcg"
 ];
 let INV_EMERG = []; // lista activa según área
 const invEmergList = document.getElementById('invEmergList');
@@ -651,49 +635,6 @@ document.getElementById('addCargo').onclick=()=>{
 };
 renderCargos();
 
-// ---- pre-alta (lista)
-let prealtas = [];
-const prealtaList=document.getElementById('prealtaList');
-function renderPrealtas(){
-  prealtaList.innerHTML='';
-  if(prealtas.length===0){
-    const e=document.createElement('div');
-    e.className='pat-empty';
-    e.textContent='Sin pacientes agregados.';
-    prealtaList.appendChild(e);
-    return;
-  }
-  prealtas.forEach((p,i)=>{
-    const row=document.createElement('div');
-    row.className='pat-row';
-    row.innerHTML=`
-      <div class="pat-fields">
-        <div class="pat-top">
-          <input class="cama" type="text" inputmode="numeric" placeholder="Cama" value="${p.cama.replace(/"/g,'&quot;')}" data-ai="${i}" data-af="cama">
-          <input class="nombre" type="text" placeholder="Nombre" value="${p.nombre.replace(/"/g,'&quot;')}" data-ai="${i}" data-af="nombre">
-        </div>
-        <input type="text" placeholder="Notas" value="${p.nota.replace(/"/g,'&quot;')}" data-ai="${i}" data-af="nota">
-      </div>
-      <button type="button" class="del" data-dela="${i}" title="Quitar">×</button>`;
-    prealtaList.appendChild(row);
-  });
-  prealtaList.querySelectorAll('input').forEach(inp=>{
-    inp.addEventListener('input',e=>{
-      const i=+e.target.dataset.ai, f=e.target.dataset.af;
-      prealtas[i][f]=e.target.value;
-      render();
-    });
-  });
-  prealtaList.querySelectorAll('[data-dela]').forEach(b=>{
-    b.onclick=()=>{ prealtas.splice(+b.dataset.dela,1); renderPrealtas(); render(); };
-  });
-}
-document.getElementById('addPrealta').onclick=()=>{
-  prealtas.push({cama:'',nombre:'',nota:''});
-  renderPrealtas(); render();
-};
-renderPrealtas();
-
 // ---- horario selector
 document.querySelectorAll('#horarioSeg button').forEach(b=>{
   b.onclick=()=>{
@@ -722,7 +663,7 @@ document.querySelectorAll('#areaSeg button').forEach(b=>{
     document.getElementById('patList').style.display = isCentral ? 'none' : '';
     document.getElementById('addPat').style.display = isCentral ? 'none' : '';
     document.getElementById('centralSubs').style.display = isCentral ? '' : 'none';
-    document.getElementById('emergCounts').style.display = (state.area==='Emergencia' || state.area==='Cirugía') ? '' : 'none';
+    document.getElementById('emergCounts').style.display = (state.area==='Emergencia') ? '' : 'none';
     renderPatients();
     renderCentralSubs();
     // Inventario Físico: ítems según área
@@ -761,9 +702,6 @@ document.querySelectorAll('[data-toggle]').forEach(group=>{
       if(key==='cargos'){
         document.getElementById('cargosBox').classList.toggle('hidden',!attention);
         if(!attention){ cargos.length=0; renderCargos(); }
-      } else if(key==='prealta'){
-        document.getElementById('prealtaBox').classList.toggle('hidden',!attention);
-        if(!attention){ prealtas.length=0; renderPrealtas(); }
       } else {
         const detalle=document.getElementById(map[key]);
         detalle.classList.toggle('hidden',!attention);
@@ -777,7 +715,6 @@ document.querySelectorAll('[data-toggle]').forEach(group=>{
 // preselect defaults visually
 document.querySelector('[data-toggle=event] [data-val="No"]').classList.add('no');
 document.querySelector('[data-toggle=cargos] [data-val="No"]').classList.add('no');
-document.querySelector('[data-toggle=prealta] [data-val="No"]').classList.add('no');
 
 // default date = today
 const t=new Date();
@@ -797,6 +734,13 @@ function buildMessage(){
   const area = state.area || "( selecciona área )";
   const fecha = fmtDate(document.getElementById('fecha').value);
   const horario = state.horario || "—";
+  // hora exacta de entrega (momento de generar el reporte)
+  const ahora = new Date();
+  let hh = ahora.getHours();
+  const mm = String(ahora.getMinutes()).padStart(2,'0');
+  const ampm = hh>=12 ? 'p.m.' : 'a.m.';
+  hh = hh%12; if(hh===0) hh=12;
+  const horaEntrega = `${hh}:${mm} ${ampm}`;
 
   const addUnit=(id,unit)=>{
     let v=document.getElementById(id).value.trim();
@@ -812,7 +756,7 @@ function buildMessage(){
   L.push(DIV);
   L.push(`📌 *ENTREGA DE TURNO*`);
   L.push(`📍 Área: *${area}*`);
-  L.push(`📅 ${fecha}   ⏰ ${horario}`);
+  L.push(`📅 ${fecha} · ${horaEntrega}   ⏰ ${horario}`);
   const entregaP=document.getElementById('entregaPersona').value.trim();
   if(entregaP) L.push(`👤 Entrega: *${entregaP}*`);
   L.push(DIV);
@@ -862,7 +806,7 @@ function buildMessage(){
     }
   } else {
     const validPats = patients.filter(p=>p.cama.trim()||p.nombre.trim());
-    const conteoArea = (state.area==='Emergencia' || state.area==='Cirugía');
+    const conteoArea = (state.area==='Emergencia');
     const atendidos = conteoArea ? document.getElementById('emergAtendidos').value.trim() : '';
     const ingresados = conteoArea ? document.getElementById('emergIngresados').value.trim() : '';
     const hayConteo = atendidos!=='' || ingresados!=='';
@@ -890,33 +834,16 @@ function buildMessage(){
   }
 
   // Novedades
-  const pa=state.prealta;
-  const validPre = prealtas.filter(p=>p.cama.trim()||p.nombre.trim()||p.nota.trim());
   const cg=state.cargos;
   const validCargos = cargos.filter(c=>c.cama.trim()||c.nombre.trim()||c.medicacion.trim());
   const ev=state.event, evD=document.getElementById('eventDetalle').value.trim();
 
-  const hayNovedad = (pa==='Sí') || (cg==='Sí') || (ev==='Sí');
+  const hayNovedad = (cg==='Sí') || (ev==='Sí');
 
   if(hayNovedad){
     L.push(DIV);
     L.push(`📋 *NOVEDADES*`);
     {
-    // Pre-alta (no realizar cargos)
-    if(pa==='Sí' && validPre.length){
-      L.push(`Pre-alta (no realizar cargos): *Sí*`);
-      validPre.forEach(p=>{
-        const cama=p.cama.trim();
-        const nom=p.nombre.trim();
-        const nota=p.nota.trim();
-        let line = cama ? `${cama} · ${nom}` : `· ${nom}`;
-        if(nota) line += ` \`${nota}\``;
-        L.push(line);
-      });
-    } else if(pa==='Sí'){
-      L.push(`Pre-alta (no realizar cargos): *Sí*`);
-    }
-
     // Pendientes por cargos
     if(cg==='Sí' && validCargos.length){
       L.push(`Pendientes por cargos: *Sí*`);
@@ -967,14 +894,6 @@ function buildMessage(){
       });
       L.push(`_Actualizado al ${fecha}_`);
     }
-  }
-
-  // Observaciones
-  const obs=document.getElementById('obs').value.trim();
-  if(obs){
-    L.push(DIV);
-    L.push(`🗒️ *OBSERVACIONES*`);
-    L.push(obs);
   }
 
   L.push(DIV);
