@@ -40,10 +40,11 @@ header{background:linear-gradient(135deg,#2C2C2A 0%,#444441 100%);color:#fff;pad
 .n1-header:hover{background:#E5E2DC}
 .n1-header.on{background:#E3EDF8;color:#1B4F8A}
 .almsel optgroup{font-style:normal;font-weight:700;color:#1B4F8A}
-.n1-arrow{font-size:9px;opacity:.6;transition:transform .2s;margin-left:4px}
+.n1-arrow{font-size:9px;opacity:.55;margin-right:2px;display:inline-block;width:9px}
 .n3-item{padding:6px 14px 6px 22px;font-size:11px;color:#777;cursor:pointer;border-left:2px solid transparent;transition:all .12s;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .n3-item:hover{background:#E8E5DF;border-left-color:#9AAAB8;color:#333}
 .n3-item.active{background:#E3EDF8;color:#1B4F8A;font-weight:600;border-left-color:#1B4F8A}
+.n3-item.todo{background:#F0EFED;border-left-color:#D8D5CE}
 .n3-item .cnt{font-size:10px;color:#AAAAA8;font-variant-numeric:tabular-nums}
 .n3-item.active .cnt{color:#1B4F8A}
 .main{flex:1;overflow:auto}
@@ -114,7 +115,7 @@ footer{text-align:center;padding:12px;font-size:11px;color:#AAAAA8;background:#F
   .hr{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
   .toolbar{padding:6px 10px;gap:6px;flex-wrap:wrap}
   .almsel{flex:1 1 100%;min-width:0;width:auto;font-size:11.5px;padding:7px 24px 7px 8px;background-position:right 8px center}
-  #lugar-select{flex:1 1 100%}
+  
   .sw{flex:1 1 100%;order:-1}
   .vsw{flex:0 0 auto}.vsw .tab{padding:6px 11px;font-size:11.5px}
   .mob-menu-btn{padding:6px 10px}
@@ -165,7 +166,6 @@ footer{text-align:center;padding:12px;font-size:11px;color:#AAAAA8;background:#F
   </div>
   <div class="sw"><span class="si">&#x1F50D;</span><input class="search" type="text" id="search" placeholder="Buscar art&iacute;culo o c&oacute;digo..." oninput="applyFilters()" autocomplete="off"></div>
   <select class="search almsel" id="atc-select" onchange="pickAtc(this.value)" aria-label="Filtrar por grupo ATC" style="display:none"></select>
-  <select class="search almsel" id="lugar-select" onchange="pickLugar(this.value)" aria-label="Filtrar por lugar"></select>
   <div class="tabs vsw">
     <button class="tab active" id="v0" onclick="switchView(0)" title="Un rengl&oacute;n por art&iacute;culo">Agrupado</button>
     <button class="tab" id="v1" onclick="switchView(1)" title="Un rengl&oacute;n por art&iacute;culo y lugar">Por lugar</button>
@@ -250,34 +250,10 @@ function buildAtcSelect(){
   sel.className="search almsel"+(atc?" on":"");
 }
 function pickAtc(v){atc=v;limit=80;buildList(document);applyFilters();}
-function buildLugarSelect(){
-  var sel=document.getElementById("lugar-select");
-  if(!sel) return;
-  var counts=countsAlm(),keys=Object.keys(counts);
-  var porTipo={};
-  keys.forEach(function(a){(porTipo[almTipo(a)]=porTipo[almTipo(a)]||[]).push(a);});
-  var html="<option value=''>&#128230; Todos los lugares ("+keys.length+")</option>";
-  Object.keys(porTipo).sort(function(x,y){return x.localeCompare(y,"es");}).forEach(function(t){
-    var lst=porTipo[t].sort(function(x,y){return almName(x).localeCompare(almName(y),"es");});
-    html+="<optgroup label='"+t+"'>"+
-      "<option value='T:"+t+"'"+(tipo===t&&!alm?" selected":"")+">Todo "+t.toLowerCase()+" \u2014 "+lst.length+" lugares</option>"+
-      lst.map(function(a){
-        return "<option value='"+a+"'"+(alm===a?" selected":"")+">&nbsp;&nbsp;"+almName(a)+" \u2014 "+counts[a]+"</option>";
-      }).join("")+"</optgroup>";
-  });
-  sel.innerHTML=html;
-  sel.value=alm?alm:(tipo?"T:"+tipo:"");
-  sel.className="search almsel"+(alm||tipo?" on":"");
-}
-function pickLugar(v){
-  if(v.indexOf("T:")===0){tipo=v.slice(2);alm="";}
-  else{alm=v;tipo="";}
-  limit=80;buildList(document);applyFilters();
-}
+var abierto={};
 function pickTipo(t){tipo=t;alm="";limit=80;buildList(document);applyFilters();}
 function buildList(container){
   buildAtcSelect();
-  buildLugarSelect();
   var counts=countsAlm();
   var el=container.querySelector("#lugar-list");
   if(!el) return;
@@ -286,12 +262,21 @@ function buildList(container){
   el.innerHTML="";
   Object.keys(porTipo).sort(function(x,y){return x.localeCompare(y,"es");}).forEach(function(t){
     var lst=porTipo[t],n=lst.reduce(function(a,x){return a+counts[x];},0);
+    var seleccionado=lst.indexOf(alm)>=0;
+    var abre=abierto[t]||seleccionado;
     var h=document.createElement("div");
     h.className="n1-header"+(tipo===t&&!alm?" on":"");
     h.style.boxShadow=(tipo===t&&!alm)?"inset 3px 0 0 #1B4F8A":"none";
-    h.innerHTML="<span>"+t+"</span><span style='font-weight:600;color:#888780'>"+n+"</span>";
-    h.onclick=function(){pickTipo(tipo===t&&!alm?"":t);closeMobDrawer();};
+    h.innerHTML="<span><span class='n1-arrow'>"+(abre?"&#9662;":"&#9656;")+"</span> "+t+"</span>"+
+      "<span style='font-weight:600;color:#888780'>"+lst.length+"</span>";
+    h.onclick=function(){abierto[t]=!abre;buildList(document);buildList(document.getElementById("mob-drawer-content"));};
     el.appendChild(h);
+    if(!abre) return;
+    var todo=document.createElement("div");
+    todo.className="n3-item todo"+(tipo===t&&!alm?" active":"");
+    todo.innerHTML="<span><b style='display:block;font-weight:700;color:inherit'>Todo "+t.toLowerCase()+"</b></span><span class='cnt'>"+n+"</span>";
+    todo.onclick=function(){tipo=(tipo===t&&!alm)?"":t;alm="";limit=80;buildList(document);buildList(document.getElementById("mob-drawer-content"));applyFilters();closeMobDrawer();};
+    el.appendChild(todo);
     lst.sort(function(x,y){return almName(x).localeCompare(almName(y),"es");}).forEach(function(a){
       var d=document.createElement("div");
       d.className="n3-item"+(alm===a?" active":"");
