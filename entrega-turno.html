@@ -16,6 +16,26 @@
     --danger:#a8322d;
     --muted:#5c6570;
     --wa:#128c4b;
+    --field:#f5f7f9;
+    --preview-bg:#263340;
+    --preview-fg:#d6e0ea;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --ink:#e8edf2;
+      --paper:#131820;
+      --card:#1c242e;
+      --line:#333d4a;
+      --accent:#5b9bd8;
+      --accent-soft:#243447;
+      --amber:#d8974e;
+      --danger:#e0736c;
+      --muted:#9aa5b1;
+      --wa:#25b866;
+      --field:#232c37;
+      --preview-bg:#0d1117;
+      --preview-fg:#c9d4e0;
+    }
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0}
@@ -27,8 +47,8 @@
     padding:0 0 120px;
   }
   header{
-    background:var(--ink);
-    color:var(--paper);
+    background:#263340;
+    color:#eceef1;
     padding:20px 18px 22px;
     border-bottom:3px solid var(--accent);
   }
@@ -106,7 +126,7 @@
     font-size:16px;
     font-family:inherit;
     color:var(--ink);
-    background:#f5f7f9;
+    background:var(--field);
     border:1px solid var(--line);
     border-radius:9px;
     padding:11px 12px;
@@ -126,7 +146,7 @@
     font-size:13px;font-weight:600;
     padding:10px 8px;
     border:1px solid var(--line);
-    background:#f5f7f9;color:var(--muted);
+    background:var(--field);color:var(--muted);
     border-radius:9px;cursor:pointer;
     transition:.12s;
   }
@@ -137,7 +157,7 @@
   .toggle button{
     flex:1;font-size:14px;font-weight:600;
     padding:10px;border:1px solid var(--line);
-    background:#f5f7f9;color:var(--muted);
+    background:var(--field);color:var(--muted);
     border-radius:9px;cursor:pointer;
   }
   .toggle button.no{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
@@ -162,7 +182,7 @@
   .pat-top{display:flex;gap:8px}
   .pat-row .del{
     flex:0 0 34px;height:40px;border:1px solid var(--line);
-    background:#f5f7f9;color:var(--danger);border-radius:9px;
+    background:var(--field);color:var(--danger);border-radius:9px;
     font-size:18px;cursor:pointer;line-height:1;
   }
   .add-btn{
@@ -178,7 +198,7 @@
   }
   .sub-sec{
     border:1px solid var(--line);border-radius:10px;
-    padding:10px;margin-bottom:10px;background:#fafbfc;
+    padding:10px;margin-bottom:10px;background:var(--field);
   }
   .sub-title{
     font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px;
@@ -187,7 +207,7 @@
   .fact-toggle{display:flex;gap:5px;flex:0 0 auto}
   .factbtn{
     font-size:12px;font-weight:600;padding:8px 9px;
-    border:1px solid var(--line);background:#f5f7f9;color:var(--muted);
+    border:1px solid var(--line);background:var(--field);color:var(--muted);
     border-radius:8px;cursor:pointer;white-space:nowrap;
   }
   .factbtn.on-yes{background:#e2ebf5;color:var(--accent);border-color:var(--accent)}
@@ -212,8 +232,9 @@
     flex:1;font-size:15px;font-weight:700;
     padding:15px;border-radius:12px;border:none;cursor:pointer;
   }
-  #copyBtn{background:var(--wa);color:#fff}
-  #resetBtn{flex:0 0 52px;background:#fff;border:1px solid var(--line);color:var(--muted);font-size:20px}
+  #copyBtn{flex:0 0 90px;background:var(--card);border:1px solid var(--accent);color:var(--accent)}
+  #waBtn{background:var(--wa);color:#fff}
+  #resetBtn{flex:0 0 48px;background:var(--card);border:1px solid var(--line);color:var(--muted);font-size:20px}
   .toast{
     position:fixed;left:50%;bottom:88px;transform:translateX(-50%) translateY(20px);
     background:var(--ink);color:#fff;padding:11px 20px;border-radius:24px;
@@ -221,7 +242,7 @@
   }
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .preview{
-    background:#263340;color:#d6e0ea;
+    background:var(--preview-bg);color:var(--preview-fg);
     border-radius:12px;padding:14px;margin-top:4px;
     font-family:ui-monospace,Menlo,Consolas,monospace;
     font-size:12.5px;white-space:pre-wrap;line-height:1.5;
@@ -255,9 +276,9 @@
     <div class="field">
       <label>Farmacia / Área</label>
       <div class="seg" id="areaSeg">
-        <button data-area="Emergencia">Emergencia</button>
-        <button data-area="UCI Adulto">UCI Adulto</button>
-        <button data-area="Cirugía">Cirugía</button>
+        <button data-area="Farmacia Urgencias">Farmacia Urgencias</button>
+        <button data-area="Farmacia UCI">Farmacia UCI</button>
+        <button data-area="Farmacia Cirugía">Farmacia Cirugía</button>
         <button data-area="Servicio Farmacéutico Central">Serv. Farm. Central</button>
       </div>
     </div>
@@ -306,7 +327,7 @@
   </div>
 
   <div class="card" id="patCard">
-    <h2><span class="num">3</span> Pacientes</h2>
+    <h2><span class="num">3</span> Pacientes<span id="patCount" style="margin-left:8px;font-weight:600;color:var(--muted);text-transform:none;letter-spacing:0"></span></h2>
     <div id="emergCounts" class="row" style="display:none">
       <div class="field">
         <label>Pacientes atendidos</label>
@@ -324,17 +345,6 @@
 
   <div class="card">
     <h2><span class="num">4</span> Novedades</h2>
-    <div class="field">
-      <label>Pendientes por cargos</label>
-      <div class="toggle" data-toggle="cargos">
-        <button data-val="No" class="no">No</button>
-        <button data-val="Sí">Sí</button>
-      </div>
-      <div id="cargosBox" class="hidden">
-        <div id="cargoList"></div>
-        <button type="button" id="addCargo" class="add-btn">+ Agregar pendiente</button>
-      </div>
-    </div>
     <div class="field">
       <label>Eventualidades</label>
       <div class="toggle" data-toggle="event">
@@ -367,7 +377,8 @@
 <div class="fab">
   <div class="inner">
     <button id="resetBtn" title="Limpiar">⟲</button>
-    <button id="copyBtn">Copiar para WhatsApp</button>
+    <button id="copyBtn">Copiar</button>
+    <button id="waBtn" title="Enviar por WhatsApp">Enviar a WhatsApp</button>
   </div>
 </div>
 <div class="toast" id="toast">Copiado ✓</div>
@@ -377,7 +388,8 @@ const CONSIGNADOS = [
   "TROCAR OPTICO 5/100MM","TROCAR OPTICO 11/100MM","TROCAR OPTICO 12/100MM",
   "TROCAR OPTICO 12/150MM","TROCAR BALON 5/100MM","TROCAR CORTANTE 15/100MM",
   "MALLA OPTILENE 15X15","MALLA OPTILENE 30X30","HISTOACRYL LAPFIX",
-  "HISTOACRYL BLUE 0.5ML","CLIPS POLIMERO XL","CLIPS POLIMERO ML",
+  "HISTOACRYL BLUE 0.5ML","HISTOACRYL BLUE 0.5ML TRANSPARENTE REF:0071",
+  "CLIPS POLIMERO XL","CLIPS POLIMERO ML",
   "CLIPS POLIMERO L","ENDOBAG 200ML","DRENAJE TORACICO",
   "GRAPAS 4.8MM GRAPADORA LINEAL PANTHER",
   "PANTHER GRAPADORA CIRCULAR 32MM 5.0MM",
@@ -388,7 +400,7 @@ const CONSIGNADOS = [
 ];
 
 const state = {
-  area:"", horario:"", event:"No", cargos:"No"
+  area:"", horario:"", event:"No"
 };
 let patients = [];
 
@@ -435,8 +447,8 @@ function buildInvFisico(){
 // ---- patients
 const patList=document.getElementById('patList');
 function statusOptions(){
-  if(state.area==='Cirugía') return ['','Pre-Q','Post-Q','En Sala','Hospitalizado','Alta'];
-  if(state.area==='Emergencia') return ['','en BOX','Alta','Hospitalizado'];
+  if(state.area==='Farmacia Cirugía') return ['','Pre-Q','Post-Q','En Sala','Hospitalizado','Alta'];
+  if(state.area==='Farmacia Urgencias') return ['','en BOX','Alta','Hospitalizado'];
   return null;
 }
 function renderPatients(){
@@ -465,14 +477,24 @@ function renderPatients(){
         </div>
         ${p.facturado==='Sí' ? '<div class="fact-warn">📎 Recuerda enviar la constancia de facturación.</div>' : ''}`;
     }
+    let camaFieldN;
+    if(state.area==='Farmacia UCI'){
+      const optsN = ['<option value="">Cama...</option>'];
+      for(let c=301;c<=318;c++){
+        optsN.push(`<option value="${c}" ${p.cama===String(c)?'selected':''}>${c}</option>`);
+      }
+      camaFieldN=`<select class="cama status" data-pi="${i}" data-pf="cama">${optsN.join('')}</select>`;
+    } else {
+      camaFieldN=`<input class="cama" type="text" inputmode="numeric" placeholder="Cama" value="${p.cama.replace(/"/g,'&quot;')}" data-pi="${i}" data-pf="cama">`;
+    }
     row.innerHTML=`
       <div class="pat-fields">
         <div class="pat-top">
-          <input class="cama" type="text" inputmode="numeric" placeholder="Cama" value="${p.cama.replace(/"/g,'&quot;')}" data-pi="${i}" data-pf="cama">
+          ${camaFieldN}
           <input class="nombre" type="text" placeholder="Nombre y apellido" value="${p.nombre.replace(/"/g,'&quot;')}" data-pi="${i}" data-pf="nombre">
         </div>
         ${extra}
-        ${state.area==='UCI Adulto' ? `<input type="text" placeholder="ARS (obligatoria)" value="${(p.ars||'').replace(/"/g,'&quot;')}" data-pi="${i}" data-pf="ars" class="${p.nombre.trim() && !(p.ars||'').trim() ? 'ars-falta' : ''}">` : ''}
+        ${state.area==='Farmacia UCI' ? `<input type="text" placeholder="ARS (obligatoria)" value="${(p.ars||'').replace(/"/g,'&quot;')}" data-pi="${i}" data-pf="ars" class="${p.nombre.trim() && !(p.ars||'').trim() ? 'ars-falta' : ''}">` : ''}
         <input type="text" placeholder="Notas" value="${p.nota.replace(/"/g,'&quot;')}" data-pi="${i}" data-pf="nota">
       </div>
       <button type="button" class="del" data-del="${i}" title="Quitar">×</button>`;
@@ -516,6 +538,7 @@ const CENTRAL_SECS = [
 ];
 // Camas por sección: array de opciones. Si no está definida, la cama es texto libre.
 const CAMAS_SEC = {
+  'UCIAD': Array.from({length:18},(_,k)=>String(301+k)),
   'UCIN': ['UCI Neo 1','UCI Neo 2','UCI Neo 3','UCI Neo 4'],
   'UCIPED': ['UCIP1','UCIP2','UCIP3','UCIP4'],
   'Neonatal': ['Neo1','Neo2','Neo3','Neo4','Neo5','Neo6'],
@@ -596,49 +619,6 @@ function renderCentralSubs(){
 }
 renderCentralSubs();
 
-// ---- pendientes por cargos (lista)
-let cargos = [];
-const cargoList=document.getElementById('cargoList');
-function renderCargos(){
-  cargoList.innerHTML='';
-  if(cargos.length===0){
-    const e=document.createElement('div');
-    e.className='pat-empty';
-    e.textContent='Sin pendientes agregados.';
-    cargoList.appendChild(e);
-    return;
-  }
-  cargos.forEach((c,i)=>{
-    const row=document.createElement('div');
-    row.className='pat-row';
-    row.innerHTML=`
-      <div class="pat-fields">
-        <div class="pat-top">
-          <input class="cama" type="text" inputmode="numeric" placeholder="Cama" value="${c.cama.replace(/"/g,'&quot;')}" data-ci="${i}" data-cf="cama">
-          <input class="nombre" type="text" placeholder="Nombre del paciente" value="${c.nombre.replace(/"/g,'&quot;')}" data-ci="${i}" data-cf="nombre">
-        </div>
-        <input type="text" placeholder="Medicación" value="${c.medicacion.replace(/"/g,'&quot;')}" data-ci="${i}" data-cf="medicacion">
-      </div>
-      <button type="button" class="del" data-delc="${i}" title="Quitar">×</button>`;
-    cargoList.appendChild(row);
-  });
-  cargoList.querySelectorAll('input').forEach(inp=>{
-    inp.addEventListener('input',e=>{
-      const i=+e.target.dataset.ci, f=e.target.dataset.cf;
-      cargos[i][f]=e.target.value;
-      render();
-    });
-  });
-  cargoList.querySelectorAll('[data-delc]').forEach(b=>{
-    b.onclick=()=>{ cargos.splice(+b.dataset.delc,1); renderCargos(); render(); };
-  });
-}
-document.getElementById('addCargo').onclick=()=>{
-  cargos.push({cama:'',nombre:'',medicacion:''});
-  renderCargos(); render();
-};
-renderCargos();
-
 // ---- horario selector
 document.querySelectorAll('#horarioSeg button').forEach(b=>{
   b.onclick=()=>{
@@ -656,7 +636,7 @@ document.querySelectorAll('#areaSeg button').forEach(b=>{
     document.querySelectorAll('#areaSeg button').forEach(x=>x.classList.remove('on'));
     b.classList.add('on');
     state.area=b.dataset.area;
-    const isCx = state.area==='Cirugía';
+    const isCx = state.area==='Farmacia Cirugía';
     invCard.classList.toggle('hidden',!isCx);
     // 3 neveras solo en Servicio Farmacéutico Central
     const isCentral = state.area==='Servicio Farmacéutico Central';
@@ -667,15 +647,15 @@ document.querySelectorAll('#areaSeg button').forEach(b=>{
     document.getElementById('patList').style.display = isCentral ? 'none' : '';
     document.getElementById('addPat').style.display = isCentral ? 'none' : '';
     document.getElementById('centralSubs').style.display = isCentral ? '' : 'none';
-    document.getElementById('emergCounts').style.display = (state.area==='Emergencia') ? '' : 'none';
+    document.getElementById('emergCounts').style.display = (state.area==='Farmacia Urgencias') ? '' : 'none';
     renderPatients();
     renderCentralSubs();
     // Inventario Físico: ítems según área
     const invCardFis = document.getElementById('invEmergCard');
-    if(state.area==='Emergencia'){
+    if(state.area==='Farmacia Urgencias'){
       INV_EMERG = INV_FIS_EMERG;
       buildInvFisico(); invCardFis.style.display='';
-    } else if(state.area==='UCI Adulto'){
+    } else if(state.area==='Farmacia UCI'){
       INV_EMERG = INV_FIS_UCI;
       buildInvFisico(); invCardFis.style.display='';
     } else if(isCx){
@@ -703,11 +683,8 @@ document.querySelectorAll('[data-toggle]').forEach(group=>{
       state[key]=val;
       const attention = (val==='Sí'||val==='Con novedad');
       btn.classList.add(attention?'yes':'no');
-      if(key==='cargos'){
-        document.getElementById('cargosBox').classList.toggle('hidden',!attention);
-        if(!attention){ cargos.length=0; renderCargos(); }
-      } else {
-        const detalle=document.getElementById(map[key]);
+      const detalle=document.getElementById(map[key]);
+      if(detalle){
         detalle.classList.toggle('hidden',!attention);
         if(!attention) detalle.value='';
       }
@@ -718,7 +695,6 @@ document.querySelectorAll('[data-toggle]').forEach(group=>{
 
 // preselect defaults visually
 document.querySelector('[data-toggle=event] [data-val="No"]').classList.add('no');
-document.querySelector('[data-toggle=cargos] [data-val="No"]').classList.add('no');
 
 // default date = today
 const t=new Date();
@@ -810,7 +786,7 @@ function buildMessage(){
     }
   } else {
     const validPats = patients.filter(p=>p.cama.trim()||p.nombre.trim());
-    const conteoArea = (state.area==='Emergencia');
+    const conteoArea = (state.area==='Farmacia Urgencias');
     const atendidos = conteoArea ? document.getElementById('emergAtendidos').value.trim() : '';
     const ingresados = conteoArea ? document.getElementById('emergIngresados').value.trim() : '';
     const hayConteo = atendidos!=='' || ingresados!=='';
@@ -838,40 +814,15 @@ function buildMessage(){
   }
 
   // Novedades
-  const cg=state.cargos;
-  const validCargos = cargos.filter(c=>c.cama.trim()||c.nombre.trim()||c.medicacion.trim());
   const ev=state.event, evD=document.getElementById('eventDetalle').value.trim();
-
-  const hayNovedad = (cg==='Sí') || (ev==='Sí');
-
-  if(hayNovedad){
+  if(ev==='Sí'){
     L.push(DIV);
     L.push(`📋 *NOVEDADES*`);
-    {
-    // Pendientes por cargos
-    if(cg==='Sí' && validCargos.length){
-      L.push(`Pendientes por cargos: *Sí*`);
-      validCargos.forEach(c=>{
-        const cama=c.cama.trim();
-        const nom=c.nombre.trim();
-        const med=c.medicacion.trim();
-        let line = cama ? `${cama} · ${nom}` : `· ${nom}`;
-        if(med) line += ` \`${med}\``;
-        L.push(line);
-      });
-    } else if(cg==='Sí'){
-      L.push(`Pendientes por cargos: *Sí*`);
-    }
-
-    // Eventualidades
-    if(ev==='Sí'){
-      L.push(`Eventualidades: *Sí* — ${evD||'—'}`);
-    }
-    }
+    L.push(`Eventualidades: *Sí* — ${evD||'—'}`);
   }
 
   // Inventario Consignados (solo Cirugía) — ocultar si todo vacío
-  if(state.area==='Cirugía'){
+  if(state.area==='Farmacia Cirugía'){
     const inputs=[...document.querySelectorAll('[data-inv]')];
     const hayAlgo=inputs.some(inp=>inp.value.trim()!=='');
     if(hayAlgo){
@@ -904,22 +855,90 @@ function buildMessage(){
   return L.join('\n');
 }
 
-function render(){ document.getElementById('preview').textContent=buildMessage(); }
+function actualizarContador(){
+  const el=document.getElementById('patCount');
+  if(!el) return;
+  let n=0;
+  if(state.area==='Servicio Farmacéutico Central'){
+    Object.keys(centralPats).forEach(k=>{
+      n += centralPats[k].filter(p=>p.cama.trim()||p.nombre.trim()).length;
+    });
+  } else {
+    n = patients.filter(p=>p.cama.trim()||p.nombre.trim()).length;
+  }
+  el.textContent = n>0 ? `· ${n}` : '';
+}
+function render(){ document.getElementById('preview').textContent=buildMessage(); actualizarContador(); saveState(); }
 
-// ---- copy
-document.getElementById('copyBtn').onclick=async()=>{
-  if(!state.area){ flash("Selecciona un área primero"); return; }
-  // ARS obligatoria en UCI Adulto si el paciente tiene nombre
-  if(state.area==='UCI Adulto'){
+// ---- Guardado automático (localStorage) ----
+const LS_KEY='entregaTurnoHema_v1';
+function gv(id){ const el=document.getElementById(id); return el?el.value:''; }
+function saveState(){
+  try{
+    const data={
+      area:state.area, horario:state.horario, event:state.event,
+      entregaPersona:gv('entregaPersona'),
+      tNevera:gv('tNevera'), tNevera2:gv('tNevera2'), tNevera3:gv('tNevera3'),
+      tArea:gv('tArea'), humedad:gv('humedad'),
+      emergAtendidos:gv('emergAtendidos'), emergIngresados:gv('emergIngresados'),
+      eventDetalle:gv('eventDetalle'),
+      patients:patients, centralPats:centralPats,
+      invC:{}, invF:{}
+    };
+    document.querySelectorAll('[data-inv]').forEach((inp,i)=>{ data.invC[CONSIGNADOS[i]]=inp.value; });
+    document.querySelectorAll('[data-invem]').forEach((inp,i)=>{ if(INV_EMERG[i]) data.invF[INV_EMERG[i]]=inp.value; });
+    localStorage.setItem(LS_KEY, JSON.stringify(data));
+  }catch(e){}
+}
+function loadState(){
+  let data;
+  try{ data=JSON.parse(localStorage.getItem(LS_KEY)); }catch(e){ return; }
+  if(!data) return;
+  // arrays
+  if(Array.isArray(data.patients)){ patients.length=0; data.patients.forEach(p=>patients.push(p)); }
+  if(data.centralPats){ Object.keys(centralPats).forEach(k=>{ if(Array.isArray(data.centralPats[k])) centralPats[k]=data.centralPats[k]; }); }
+  // campos simples
+  const setv=(id,v)=>{ const el=document.getElementById(id); if(el&&v!=null) el.value=v; };
+  setv('entregaPersona',data.entregaPersona);
+  setv('tNevera',data.tNevera); setv('tNevera2',data.tNevera2); setv('tNevera3',data.tNevera3);
+  setv('tArea',data.tArea); setv('humedad',data.humedad);
+  setv('emergAtendidos',data.emergAtendidos); setv('emergIngresados',data.emergIngresados);
+  setv('eventDetalle',data.eventDetalle);
+  // horario
+  if(data.horario){
+    state.horario=data.horario;
+    document.querySelectorAll('#horarioSeg button').forEach(x=>{ x.classList.toggle('no', x.dataset.h===data.horario); });
+  }
+  // área (reconstruye inventario, pacientes, sub-secciones)
+  if(data.area){
+    const btn=[...document.querySelectorAll('#areaSeg button')].find(b=>b.dataset.area===data.area);
+    if(btn) btn.click();
+  }
+  // eventualidades toggle
+  if(data.event==='Sí'){
+    const eb=document.querySelector('[data-toggle=event] [data-val="Sí"]');
+    if(eb) eb.click();
+  }
+  // cantidades de inventario (después de reconstruir por área)
+  if(data.invC) document.querySelectorAll('[data-inv]').forEach((inp,i)=>{ if(data.invC[CONSIGNADOS[i]]!=null) inp.value=data.invC[CONSIGNADOS[i]]; });
+  if(data.invF) document.querySelectorAll('[data-invem]').forEach((inp,i)=>{ if(INV_EMERG[i]&&data.invF[INV_EMERG[i]]!=null) inp.value=data.invF[INV_EMERG[i]]; });
+  render();
+}
+
+// ---- validación compartida (devuelve true si está OK para enviar)
+function validarReporte(){
+  if(!state.area){ flash("Selecciona un área primero"); return false; }
+  // ARS obligatoria en UCI si el paciente tiene nombre
+  if(state.area==='Farmacia UCI'){
     const faltanArs = patients.filter(p=>p.nombre.trim() && !(p.ars||'').trim());
     if(faltanArs.length){
       const lista = faltanArs.map(p=>p.cama.trim()?`cama ${p.cama.trim()} (${p.nombre.trim()})`:p.nombre.trim()).join('\n');
-      alert('⚠️ Falta la ARS de:\n\n'+lista+'\n\nComplétala antes de copiar el reporte.');
-      return;
+      alert('⚠️ Falta la ARS de:\n\n'+lista+'\n\nComplétala antes de enviar el reporte.');
+      return false;
     }
   }
-  // En Cirugía y Emergencia: si hay nombre, cama/status/facturado son obligatorios (notas no)
-  if(state.area==='Cirugía' || state.area==='Emergencia'){
+  // En Cirugía y Urgencias: si hay nombre, cama/status/facturado son obligatorios (notas no)
+  if(state.area==='Farmacia Cirugía' || state.area==='Farmacia Urgencias'){
     const incompletos = patients.filter(p=>{
       if(!p.nombre.trim()) return false;
       return !p.cama.trim() || !(p.status||'').trim() || !(p.facturado||'').trim();
@@ -933,46 +952,59 @@ document.getElementById('copyBtn').onclick=async()=>{
         return `${p.nombre.trim()}: falta ${falta.join(', ')}`;
       }).join('\n');
       alert('⚠️ Completa los datos de estos pacientes:\n\n'+lista+'\n\n(Las notas son opcionales.)');
-      return;
+      return false;
     }
   }
   // Inventario: todos los ítems visibles deben tener un valor (aunque sea 0)
   const invVacios = [];
-  // Consignados (solo Cirugía)
-  if(state.area==='Cirugía'){
-    document.querySelectorAll('[data-inv]').forEach((inp,i)=>{
-      if(inp.value.trim()==='') invVacios.push(CONSIGNADOS[i]);
-    });
+  if(state.area==='Farmacia Cirugía'){
+    document.querySelectorAll('[data-inv]').forEach((inp,i)=>{ if(inp.value.trim()==='') invVacios.push(CONSIGNADOS[i]); });
   }
-  // Inventario Físico (según área)
   if(INV_EMERG.length){
-    document.querySelectorAll('[data-invem]').forEach((inp,i)=>{
-      if(inp.value.trim()==='') invVacios.push(INV_EMERG[i]);
-    });
+    document.querySelectorAll('[data-invem]').forEach((inp,i)=>{ if(inp.value.trim()==='') invVacios.push(INV_EMERG[i]); });
   }
   if(invVacios.length){
     alert('⚠️ Completa el inventario. Faltan (pon 0 si no hay):\n\n'+invVacios.join('\n'));
-    return;
+    return false;
   }
-  const msg=buildMessage();
-  try{ await navigator.clipboard.writeText(msg); }
-  catch(e){
-    const ta=document.createElement('textarea');ta.value=msg;document.body.appendChild(ta);
-    ta.select();document.execCommand('copy');ta.remove();
-  }
-  // Recordatorio de constancias (solo Cirugía y Emergencia)
-  if(state.area==='Cirugía' || state.area==='Emergencia'){
+  return true;
+}
+// Recordatorio de constancias (solo Cirugía y Urgencias)
+function avisoConstancias(){
+  if(state.area==='Farmacia Cirugía' || state.area==='Farmacia Urgencias'){
     const facturados = patients.filter(p=>p.facturado==='Sí' && (p.cama.trim()||p.nombre.trim()));
     if(facturados.length){
       const lista = facturados.map(p=>p.cama.trim() ? `cama ${p.cama.trim()}` : p.nombre.trim()).join(', ');
       alert('📎 No olvides adjuntar en WhatsApp las constancias de facturación de:\n\n'+lista);
     }
   }
+}
+
+// ---- copiar
+document.getElementById('copyBtn').onclick=async()=>{
+  if(!validarReporte()) return;
+  const msg=buildMessage();
+  try{ await navigator.clipboard.writeText(msg); }
+  catch(e){
+    const ta=document.createElement('textarea');ta.value=msg;document.body.appendChild(ta);
+    ta.select();document.execCommand('copy');ta.remove();
+  }
+  avisoConstancias();
   flash("Copiado ✓  Pégalo en WhatsApp");
+};
+
+// ---- enviar a WhatsApp
+document.getElementById('waBtn').onclick=()=>{
+  if(!validarReporte()) return;
+  const msg=buildMessage();
+  avisoConstancias();
+  const url='https://wa.me/?text='+encodeURIComponent(msg);
+  window.open(url,'_blank');
 };
 
 document.getElementById('resetBtn').onclick=()=>{
   if(!confirm('¿Limpiar todo el formulario?')) return;
+  try{ localStorage.removeItem(LS_KEY); }catch(e){}
   location.reload();
 };
 
@@ -982,6 +1014,7 @@ function flash(t){
   clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),1900);
 }
 
+loadState();
 render();
 </script>
 </body>
