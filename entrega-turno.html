@@ -235,15 +235,15 @@
   #sendBtn{background:var(--wa);color:#fff}
   #resetBtn{flex:0 0 48px;background:var(--card);border:1px solid var(--line);color:var(--muted);font-size:20px}
   /* Contenedor del PDF: fuera de pantalla pero renderizable */
-  #pdfReport{position:fixed;left:-9999px;top:0;width:800px;background:#fff;}
+  #pdfReport{position:fixed;left:-9999px;top:0;width:760px;background:#fff;}
   #pdfReport .pdf-block{
-    background:#fff;border:1px solid #d3d8de;border-radius:10px;
-    padding:14px 16px;margin:0 0 12px;font-family:'Segoe UI',system-ui,sans-serif;
-    color:#263340;font-size:16px;line-height:1.5;
+    background:#fff;border:1px solid #d3d8de;border-radius:8px;
+    padding:9px 13px;margin:0 0 7px;font-family:'Segoe UI',system-ui,sans-serif;
+    color:#263340;font-size:14.5px;line-height:1.35;
   }
-  #pdfReport .pdf-line{margin:2px 0;white-space:pre-wrap;word-break:break-word;}
-  #pdfReport .pdf-h{font-size:18px;font-weight:700;margin:0 0 6px;color:#1f4f7a;}
-  #pdfReport .pdf-code{background:#eef2f6;border-radius:4px;padding:1px 6px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px;}
+  #pdfReport .pdf-line{margin:1px 0;white-space:normal;word-break:break-word;}
+  #pdfReport .pdf-h{font-size:15.5px;font-weight:700;margin:0 0 4px;color:#1f4f7a;}
+  #pdfReport .pdf-code{color:#4a5560;font-style:italic;white-space:normal;word-break:break-word;}
   .toast{
     position:fixed;left:50%;bottom:88px;transform:translateX(-50%) translateY(20px);
     background:var(--ink);color:#fff;padding:11px 20px;border-radius:24px;
@@ -1457,18 +1457,45 @@ async function generarPDF(){
   const baseOpts={ backgroundColor:'#ffffff', allowTaint:false, useCORS:true, imageTimeout:0, logging:false };
   const scale = isIOS ? 1.5 : 2;
   const pdf=new jsPDF('p','mm','a4');
-  const ph=297, margin=10, cw=210-margin*2;
+  const ph=297, margin=10, cw=210-margin*2, bottom=ph-margin, gap=3;
   drawPdfHeader(pdf, margin);
-  let y=34;
+  let y=32;
   const blockEls=[...cont.querySelectorAll('.pdf-block')];
   for(const el of blockEls){
     let canvas;
     try{ canvas=await html2canvas(el, Object.assign({},baseOpts,{scale})); }
     catch(err){ canvas=await html2canvas(el, Object.assign({},baseOpts,{scale:1})); }
-    const imgH = canvas.height * cw / canvas.width;
-    if(y+imgH > ph-margin){ pdf.addPage(); y=margin; }
-    pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',margin,y,cw,imgH);
-    y += imgH + 4;
+    const imgH = canvas.height * cw / canvas.width; // alto en mm
+    const avail = bottom - y;
+    if(imgH <= avail){
+      // cabe entero en lo que queda de la página
+      pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',margin,y,cw,imgH);
+      y += imgH + gap;
+    } else if(imgH <= 95){
+      // bloque pequeño: pasarlo entero a la página siguiente (no se corta)
+      pdf.addPage(); y=margin;
+      pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',margin,y,cw,imgH);
+      y += imgH + gap;
+    } else {
+      // bloque grande (ej. inventario): dividirlo llenando cada página, sin desperdiciar
+      const pxPerMm = canvas.width / cw;
+      let srcY=0;
+      while(srcY < canvas.height){
+        let av = bottom - y;
+        if(av < 20){ pdf.addPage(); y=margin; av = bottom - y; }
+        const sliceHpx = Math.min(Math.round(av*pxPerMm), canvas.height - srcY);
+        const tmp=document.createElement('canvas');
+        tmp.width=canvas.width; tmp.height=sliceHpx;
+        const ctx=tmp.getContext('2d');
+        ctx.fillStyle='#fff'; ctx.fillRect(0,0,tmp.width,tmp.height);
+        ctx.drawImage(canvas,0,srcY,canvas.width,sliceHpx,0,0,canvas.width,sliceHpx);
+        const sliceHmm = sliceHpx/pxPerMm;
+        pdf.addImage(tmp.toDataURL('image/jpeg',0.92),'JPEG',margin,y,cw,sliceHmm);
+        y += sliceHmm; srcY += sliceHpx;
+        if(srcY < canvas.height){ pdf.addPage(); y=margin; }
+      }
+      y += gap;
+    }
   }
   cont.innerHTML='';
   return pdf;
