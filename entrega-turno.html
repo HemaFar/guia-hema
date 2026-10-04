@@ -232,7 +232,6 @@
     flex:1;font-size:15px;font-weight:700;
     padding:15px;border-radius:12px;border:none;cursor:pointer;
   }
-  #copyBtn{flex:0 0 82px;background:var(--card);border:1px solid var(--accent);color:var(--accent);font-size:14px}
   #sendBtn{background:var(--wa);color:#fff}
   #resetBtn{flex:0 0 48px;background:var(--card);border:1px solid var(--line);color:var(--muted);font-size:20px}
   /* Contenedor del PDF: fuera de pantalla pero renderizable */
@@ -387,7 +386,6 @@
 <div class="fab">
   <div class="inner">
     <button id="resetBtn" title="Limpiar">⟲</button>
-    <button id="copyBtn">Copiar</button>
     <button id="sendBtn" title="Enviar texto y PDF">Enviar (texto + PDF)</button>
   </div>
 </div>
@@ -1415,19 +1413,6 @@ function avisoConstancias(){
     }
   }
 }
-
-// ---- copiar
-document.getElementById('copyBtn').onclick=async()=>{
-  if(!validarReporte()) return;
-  const msg=buildMessage();
-  try{ await navigator.clipboard.writeText(msg); }
-  catch(e){
-    const ta=document.createElement('textarea');ta.value=msg;document.body.appendChild(ta);
-    ta.select();document.execCommand('copy');ta.remove();
-  }
-  avisoConstancias();
-  flash("Copiado ✓  Pégalo en WhatsApp");
-};
 
 // ---- Generación del PDF ----
 function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
