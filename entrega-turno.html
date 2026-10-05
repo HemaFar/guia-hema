@@ -928,7 +928,7 @@ function renderPatients(){
           <input class="nombre" type="text" placeholder="Nombre y apellido" value="${p.nombre.replace(/"/g,'&quot;')}" data-pi="${i}" data-pf="nombre">
         </div>
         ${extra}
-        ${state.area==='Farmacia UCI' ? `<input type="text" placeholder="ARS (obligatoria)" value="${(p.ars||'').replace(/"/g,'&quot;')}" data-pi="${i}" data-pf="ars" class="${p.nombre.trim() && !(p.ars||'').trim() ? 'ars-falta' : ''}">` : ''}
+        ${(state.area==='Farmacia UCI'||state.area==='Farmacia Cirugía') ? `<input type="text" placeholder="ARS (obligatoria)" value="${(p.ars||'').replace(/"/g,'&quot;')}" data-pi="${i}" data-pf="ars" class="${p.nombre.trim() && !(p.ars||'').trim() ? 'ars-falta' : ''}">` : ''}
         <input type="text" placeholder="Notas" value="${p.nota.replace(/"/g,'&quot;')}" data-pi="${i}" data-pf="nota">
       </div>
       <button type="button" class="del" data-del="${i}" title="Quitar">×</button>`;
@@ -1362,8 +1362,8 @@ function loadState(){
 // ---- validación compartida (devuelve true si está OK para enviar)
 function validarReporte(){
   if(!state.area){ flash("Selecciona un área primero"); return false; }
-  // ARS obligatoria en UCI si el paciente tiene nombre
-  if(state.area==='Farmacia UCI'){
+  // ARS obligatoria en UCI y Cirugía si el paciente tiene nombre
+  if(state.area==='Farmacia UCI' || state.area==='Farmacia Cirugía'){
     const faltanArs = patients.filter(p=>p.nombre.trim() && !(p.ars||'').trim());
     if(faltanArs.length){
       const lista = faltanArs.map(p=>p.cama.trim()?`cama ${p.cama.trim()} (${p.nombre.trim()})`:p.nombre.trim()).join('\n');
