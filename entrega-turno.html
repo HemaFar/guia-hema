@@ -1506,19 +1506,28 @@ document.getElementById('sendBtn').onclick=async()=>{
   if(!validarReporte()) return;
   const btn=document.getElementById('sendBtn');
   const old=btn.textContent; btn.disabled=true; btn.textContent='Generando…';
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
   try{
     const msg=buildMessage();
+    // En Android el compartir pierde el texto al adjuntar el PDF: copiamos el texto YA (dentro del toque)
+    let copiado=false;
+    if(!isIOS){ try{ await navigator.clipboard.writeText(msg); copiado=true; }catch(e){} }
     const pdf=await generarPDF();
     const blob=pdf.output('blob');
     const file=new File([blob],'Entrega-Turno.pdf',{type:'application/pdf'});
-    // En celular: compartir texto + PDF en una sola acción
     if(navigator.canShare && navigator.canShare({files:[file]})){
-      try{
-        await navigator.share({files:[file], text:msg, title:'Entrega de Turno'});
-      }catch(e){ /* cancelado por el usuario */ }
+      if(isIOS){
+        // iPhone: texto + PDF juntos en una sola acción
+        try{ await navigator.share({files:[file], text:msg, title:'Entrega de Turno'}); }catch(e){}
+      } else {
+        // Android: compartir solo el PDF; el texto quedó copiado para pegar
+        try{ await navigator.share({files:[file], title:'Entrega de Turno'}); }catch(e){}
+        if(copiado) flash('📋 Texto copiado · pégalo en WhatsApp junto al PDF');
+        else flash('PDF listo · recuerda escribir el mensaje');
+      }
     } else {
-      // En computadora: copiar el texto y descargar el PDF
-      try{ await navigator.clipboard.writeText(msg); }catch(e){}
+      // Computadora: copiar el texto y descargar el PDF
+      try{ if(!copiado) await navigator.clipboard.writeText(msg); }catch(e){}
       pdf.save('Entrega-Turno.pdf');
       flash('Texto copiado ✓ y PDF descargado');
     }
