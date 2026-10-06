@@ -1504,14 +1504,14 @@ async function generarPDF(){
 // ---- Enviar: texto + PDF juntos, con un solo botón ----
 document.getElementById('sendBtn').onclick=async()=>{
   if(!validarReporte()) return;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+  const msg=buildMessage();
+  // Copiar el texto DE INMEDIATO (dentro del toque) en Android/escritorio — robusto
+  let copiado=false;
+  if(!isIOS){ copiado=copiarTexto(msg); }
   const btn=document.getElementById('sendBtn');
   const old=btn.textContent; btn.disabled=true; btn.textContent='Generando…';
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
   try{
-    const msg=buildMessage();
-    // En Android el compartir pierde el texto al adjuntar el PDF: copiamos el texto YA (dentro del toque)
-    let copiado=false;
-    if(!isIOS){ try{ await navigator.clipboard.writeText(msg); copiado=true; }catch(e){} }
     const pdf=await generarPDF();
     const blob=pdf.output('blob');
     const file=new File([blob],'Entrega-Turno.pdf',{type:'application/pdf'});
@@ -1520,14 +1520,19 @@ document.getElementById('sendBtn').onclick=async()=>{
         // iPhone: texto + PDF juntos en una sola acción
         try{ await navigator.share({files:[file], text:msg, title:'Entrega de Turno'}); }catch(e){}
       } else {
-        // Android: compartir solo el PDF; el texto quedó copiado para pegar
+        // Android: el texto ya está copiado; se comparte el PDF y se pega el texto
+        let verAviso=false;
+        try{ verAviso = !localStorage.getItem('avisoPegarPDF'); }catch(e){ verAviso=true; }
+        if(verAviso){
+          alert('📋 El texto del reporte ya quedó COPIADO.\n\nAl compartir:\n1) Elige WhatsApp y el chat\n2) El PDF se adjunta solo\n3) Mantén presionado el cuadro del mensaje → PEGAR\n\n(Este aviso solo aparece la primera vez)');
+          try{ localStorage.setItem('avisoPegarPDF','1'); }catch(e){}
+        }
         try{ await navigator.share({files:[file], title:'Entrega de Turno'}); }catch(e){}
-        if(copiado) flash('📋 Texto copiado · pégalo en WhatsApp junto al PDF');
-        else flash('PDF listo · recuerda escribir el mensaje');
+        flash(copiado ? '📋 Texto copiado · pégalo en WhatsApp' : '⚠️ Copia manual: toca el recuadro de vista previa');
       }
     } else {
       // Computadora: copiar el texto y descargar el PDF
-      try{ if(!copiado) await navigator.clipboard.writeText(msg); }catch(e){}
+      if(!copiado) copiarTexto(msg);
       pdf.save('Entrega-Turno.pdf');
       flash('Texto copiado ✓ y PDF descargado');
     }
@@ -1549,6 +1554,24 @@ function flash(t){
   const el=document.getElementById('toast');
   el.textContent=t;el.classList.add('show');
   clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),1900);
+}
+// Copiado robusto (funciona en Android, navegadores internos y escritorio)
+function copiarTexto(txt){
+  let ok=false;
+  try{
+    const ta=document.createElement('textarea');
+    ta.value=txt; ta.setAttribute('readonly','');
+    ta.style.position='fixed'; ta.style.left='0'; ta.style.top='0';
+    ta.style.opacity='0'; ta.style.fontSize='16px';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try{ ta.setSelectionRange(0, txt.length); }catch(e){}
+    ok=document.execCommand('copy');
+    document.body.removeChild(ta);
+  }catch(e){ ok=false; }
+  // respaldo moderno (no bloqueante)
+  try{ if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(()=>{},()=>{}); }catch(e){}
+  return ok;
 }
 
 loadState();
