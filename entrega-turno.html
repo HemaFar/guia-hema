@@ -1507,16 +1507,24 @@ document.getElementById('sendBtn').onclick=async()=>{
   if(!validarReporte()) return;
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
   const msg=buildMessage();
-  // Copiar el texto DE INMEDIATO (dentro del toque) en Android/escritorio — robusto
+  // ¿El navegador puede compartir archivos? (celular) — se decide ANTES para actuar dentro del toque
+  let puedeCompartirArchivo=false;
+  try{ const d=new File([new Blob(['x'])],'x.pdf',{type:'application/pdf'}); puedeCompartirArchivo=!!(navigator.canShare && navigator.canShare({files:[d]})); }catch(e){}
+  // Copiar el texto DE INMEDIATO (dentro del toque) — robusto
   let copiado=false;
   if(!isIOS){ copiado=copiarTexto(msg); }
+  // En PC: abrir WhatsApp Web YA (dentro del toque, para que no lo bloquee el navegador)
+  let waWin=null;
+  if(!puedeCompartirArchivo){
+    try{ waWin=window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank'); }catch(e){}
+  }
   const btn=document.getElementById('sendBtn');
   const old=btn.textContent; btn.disabled=true; btn.textContent='Generando…';
   try{
     const pdf=await generarPDF();
     const blob=pdf.output('blob');
     const file=new File([blob],'Entrega-Turno.pdf',{type:'application/pdf'});
-    if(navigator.canShare && navigator.canShare({files:[file]})){
+    if(puedeCompartirArchivo){
       if(isIOS){
         // iPhone: texto + PDF juntos en una sola acción
         try{ await navigator.share({files:[file], text:msg, title:'Entrega de Turno'}); }catch(e){}
@@ -1532,10 +1540,13 @@ document.getElementById('sendBtn').onclick=async()=>{
         flash(copiado ? '📋 Texto copiado · pégalo en WhatsApp' : '⚠️ Copia manual: toca el recuadro de vista previa');
       }
     } else {
-      // Computadora: copiar el texto y descargar el PDF
-      if(!copiado) copiarTexto(msg);
+      // Computadora: descargar el PDF; WhatsApp Web ya se abrió con el texto; el texto también quedó copiado
       pdf.save('Entrega-Turno.pdf');
-      flash('Texto copiado ✓ y PDF descargado');
+      if(!waWin){
+        // el navegador bloqueó la ventana: abrirla ahora (o avisar)
+        try{ window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank'); }catch(e){}
+      }
+      flash('PDF descargado · en WhatsApp Web: adjunta el PDF (el texto ya está puesto)');
     }
     avisoConstancias();
   }catch(e){
