@@ -319,7 +319,7 @@
         <input type="text" id="tNevera2" placeholder="4.9" inputmode="decimal">
       </div>
       <div class="field" id="fldNevera3" style="display:none">
-        <label>Nevera 3</label>
+        <label>Oncológicos</label>
         <input type="text" id="tNevera3" placeholder="5.0" inputmode="decimal">
       </div>
     </div>
@@ -1186,7 +1186,7 @@ function buildMessage(){
     L.push(`❄️ *CADENA DE FRÍO*`);
     if(state.area==='Servicio Farmacéutico Central'){
       L.push(`Nevera Grande: *${addUnit('tNevera','°C')}*  ·  Nevera Central: *${addUnit('tNevera2','°C')}*`);
-      L.push(`Nevera 3: *${addUnit('tNevera3','°C')}*  ·  Área: *${addUnit('tArea','°C')}*`);
+      L.push(`Oncológicos: *${addUnit('tNevera3','°C')}*  ·  Área: *${addUnit('tArea','°C')}*`);
     } else {
       L.push(`Nevera: *${addUnit('tNevera','°C')}*  ·  Área: *${addUnit('tArea','°C')}*`);
     }
@@ -1540,13 +1540,23 @@ document.getElementById('sendBtn').onclick=async()=>{
         flash(copiado ? '📋 Texto copiado · pégalo en WhatsApp' : '⚠️ Copia manual: toca el recuadro de vista previa');
       }
     } else {
-      // Computadora: descargar el PDF; WhatsApp Web ya se abrió con el texto; el texto también quedó copiado
+      // Computadora: descargar el PDF; el texto ya quedó copiado; abrir WhatsApp Web con el texto
       pdf.save('Entrega-Turno.pdf');
-      if(!waWin){
-        // el navegador bloqueó la ventana: abrirla ahora (o avisar)
-        try{ window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank'); }catch(e){}
+      let abierto = !!(waWin && !waWin.closed);
+      if(!abierto){
+        // el navegador bloqueó la primera ventana: reintentar
+        try{ const w2=window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank'); abierto=!!(w2 && !w2.closed); }catch(e){}
       }
-      flash('PDF descargado · en WhatsApp Web: adjunta el PDF (el texto ya está puesto)');
+      if(abierto){
+        flash('✅ PDF descargado · WhatsApp Web abierto con el texto · adjunta el PDF');
+      } else if(copiado){
+        // ventana bloqueada pero el texto SÍ se copió: avisar para pegar
+        flash('📋 Texto COPIADO y PDF descargado · abre WhatsApp Web, pega (Ctrl+V) y adjunta el PDF');
+      } else {
+        // ni ventana ni copia: dar instrucción manual clara
+        alert('✅ PDF descargado.\n\nNo se pudo abrir WhatsApp Web automáticamente.\n\nPara enviar:\n1) Abre WhatsApp Web\n2) Pega el texto con Ctrl+V (ya está copiado)\n3) Adjunta el PDF descargado');
+        flash('📋 Texto copiado · abre WhatsApp Web y pega (Ctrl+V)');
+      }
     }
     avisoConstancias();
   }catch(e){
