@@ -823,19 +823,34 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 </script>
 <script>
 const CONSIGNADOS = [
-  "TROCAR OPTICO 5/100MM","TROCAR OPTICO 11/100MM",
-  "SET DE TROCAR OPTICO DESECHABLE ESTRIADO 11/100MM","TROCAR OPTICO 12/100MM",
-  "TROCAR OPTICO 12/150MM","TROCAR BALON 5/100MM","TROCAR CORTANTE 15/100MM",
-  "MALLA OPTILENE 15X15","MALLA OPTILENE 30X30","HISTOACRYL LAPFIX",
-  "HISTOACRYL BLUE 0.5ML","HISTOACRYL BLUE 0.5ML TRANSPARENTE REF:0071",
-  "CLIPS POLIMERO XL","CLIPS POLIMERO ML",
-  "CLIPS POLIMERO L","ENDOBAG 200ML","DRENAJE TORACICO",
-  "GRAPAS 4.8MM GRAPADORA LINEAL PANTHER",
-  "PANTHER GRAPADORA CIRCULAR 32MM 5.0MM",
-  "PANTHER GRAPADORA LINEAL 80MM 4.8MM",
-  "ENDOGRAPADORA ARTICULADA PANTHER CEAC-60",
-  "PANTHER RECARGA MORADA 60MM",
-  "PANTHER RECARGA NEGRA 60MM"
+  "CLIPS DE POLIMERO SIZE L MORADO",
+  "CLIPS DE POLIMERO SIZE ML VERDE",
+  "CLIPS DE POLIMERO SIZE XL DORADO",
+  "DRENAJE TORACICO",
+  "ENDOBAG (BOLSA) 200ML 15X1",
+  "ENDOGRAPADORA ARTICULADA GRANDE, PANTHER CEAC-60",
+  "ENDOGRAPADORA INTELIGENTE XL, PANTHER PEAL",
+  "ENDOGRAPADORA NO ARTICULADA, PANTHER CEAC-30",
+  "HISTOACRYL BLUE 0,5ML REF:0044",
+  "HISTOACRYL BLUE 0.5ML L TRANSPARENTE REF:0071",
+  "HISTOACRYL LAPFIX X5 COMPUESTO",
+  "MALLA OPTILENE MESH 15X15CM",
+  "MALLA OPTILENE MESH 30X30CM",
+  "PANTHER GRAPADORA CIRCULAR 32MM (FSCME 32)",
+  "PANTHER GRAPADORA LINEAL 80MM (SSAB-80 4.8MM)",
+  "PANTHER RECARGA ENDOGRAPADORA BLANCA 8MM CADL-45TM",
+  "PANTHER RECARGA ENDOGRAPADORA MARRON 30MM CADD-30EVS",
+  "PANTHER RECARGA ENDOGRAPADORA MORADA 45MM CADD-45ENTS",
+  "PANTHER RECARGA ENDOGRAPADORA MORADA 60MM CADD-60ENTS",
+  "PANTHER RECARGA ENDOGRAPADORA NEGRA 60MM CADD-60EPTS",
+  "PANTHER RECARGA GRAPADORA LINEAL 4.8MM (SADB-80D)",
+  "SET TROCAR OPTICO DESECH ESTR. 11/100MM",
+  "TROCAR BALON OPTIC. DESECH. ANILLO 5/100MM",
+  "TROCAR CORTANTE 15MM PANTHER",
+  "TROCAR OPTICO DESECH. ESTRIADO 11/100MM",
+  "TROCAR OPTICO DESECH. ESTRIADO 12/100MM",
+  "TROCAR OPTICO DESECH. ESTRIADO 12/150MM",
+  "TROCAR OPTICO DESECH. ESTRIADO 5/100MM"
 ];
 
 const state = {
@@ -1518,8 +1533,26 @@ function segToHTML(seg){
 function buildReportBlocks(){
   const DIV='━━━━━━━━━━━━━━';
   const msg=buildMessage();
-  const segs=msg.split(DIV).map(s=>s.trim()).filter(s=>s.length);
-  return segs.filter(s=>!s.includes('SERVICIO FARMACÉUTICO HEMA'));
+  let segs=msg.split(DIV).map(s=>s.trim()).filter(s=>s.length);
+  segs=segs.filter(s=>!s.includes('SERVICIO FARMACÉUTICO HEMA'));
+  // Trocear segmentos largos en sub-bloques PEQUEÑOS (por renglón). Al ser pequeños,
+  // el paginado los acomoda densamente y nunca parte un paciente a la mitad.
+  const GRUPO=6; // renglones de pacientes por sub-bloque
+  const out=[];
+  segs.forEach(seg=>{
+    const lines=seg.split('\n');
+    const header = /^(❄️|👤|📋|📦|📌)/.test(lines[0]) ? lines[0] : null;
+    const cuerpo = header ? lines.slice(1) : lines.slice();
+    if(cuerpo.length <= GRUPO){ out.push(seg); return; }
+    let primero=true;
+    for(let i=0;i<cuerpo.length;i+=GRUPO){
+      const trozo=cuerpo.slice(i,i+GRUPO);
+      const cab = header ? [primero ? header : header+' (cont.)'] : [];
+      out.push(cab.concat(trozo).join('\n'));
+      primero=false;
+    }
+  });
+  return out;
 }
 function drawPdfHeader(pdf, margin){
   pdf.setTextColor(38,51,64);
@@ -1557,13 +1590,16 @@ async function generarPDF(){
       // cabe entero en lo que queda de la página
       pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',margin,y,cw,imgH);
       y += imgH + gap;
-    } else if(imgH <= 95){
-      // bloque pequeño: pasarlo entero a la página siguiente (no se corta)
+    } else if(imgH <= (bottom - margin)){
+      // El sub-bloque cabe en una página pero no en lo que queda: pasarlo ENTERO
+      // a la página siguiente (nunca se parte un paciente). Los sub-bloques son
+      // pequeños (6 renglones), así que la página anterior queda bien aprovechada.
       pdf.addPage(); y=margin;
       pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',margin,y,cw,imgH);
       y += imgH + gap;
     } else {
-      // bloque grande (ej. inventario): dividirlo llenando cada página, sin desperdiciar
+      // Respaldo: un bloque más alto que una página entera (no debería ocurrir con
+      // sub-bloques de 6 renglones). Se corta por píxel para no romper el PDF.
       const pxPerMm = canvas.width / cw;
       let srcY=0;
       while(srcY < canvas.height){
