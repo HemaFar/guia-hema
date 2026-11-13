@@ -241,6 +241,8 @@
     padding:9px 13px;margin:0 0 7px;font-family:'Segoe UI',system-ui,sans-serif;
     color:#263340;font-size:14.5px;line-height:1.35;
   }
+  #pdfReport .pdf-cont{border-top:none;border-top-left-radius:0;border-top-right-radius:0;margin-top:0;padding-top:2px;}
+  #pdfReport .pdf-block:has(+ .pdf-cont){border-bottom:none;border-bottom-left-radius:0;border-bottom-right-radius:0;margin-bottom:0;padding-bottom:2px;}
   #pdfReport .pdf-line{margin:1px 0;white-space:normal;word-break:break-word;}
   #pdfReport .pdf-h{font-size:15.5px;font-weight:700;margin:0 0 4px;color:#1f4f7a;}
   #pdfReport .pdf-code{color:#4a5560;font-style:italic;white-space:normal;word-break:break-word;}
@@ -869,14 +871,26 @@ CONSIGNADOS.forEach((name,i)=>{
 
 // ---- inventario Físico (dinámico por área)
 const INV_FIS_EMERG = [
-  "Tramadol 100mg (50mg/ml) 2ml","Midazolam 15mg/3ml",
-  "Fentanilo 0.005mg/ml 2ml","Diazepam 10mg/2ml",
-  "Tenecteplasa 50mg ampolla (Metalyse)","Propofol 10mg frasco 20ml",
-  "Rocuronio (Esmeron) 50mg/5ml"
+  "TRAMADOL 100MG (50MG/ML) 2ML AMPOLLA (TRAMADON)",
+  "MIDAZOLAM 15MG (5MG/ML) 3 ML AMPOLLA (GRAY)",
+  "FENTANILO 0.05 MG/ML  2ML (GRAY)",
+  "DIAZEPAM (COMPAZ) 10 MG/2ML",
+  "TENECTEPLASA 50MG AMPOLLA (METALYSE)",
+  "PROPOFOL 10GM/ML X 20ML (GRAY) FRASCO",
+  "ROCURONIO (ESMERON) 50MG/ML 5ML",
+  "DEXKETOPROFENO TROMETAMOL 50MG/2ML  AMPOLLA (ENANTYUM)",
+  "KETOROLACO 60 MG/2ML AMPOLLA (DOLOKET)",
+  "METAMIZOL(NEOMELUBRINA) 500MG/ML  5ML",
+  "METAMIZOL(NEOMELUBRINA) 500MG/ML  2ML",
+  "BROMURO IPRATROPIO 0.5MG/SALBUTAMOL 2.5MG 2.5ML (COMBIVENT)",
+  "PARACETAMOL 10MG/ML 100ML SOLUCION INYECTABLE (MALLEN)"
 ];
 const INV_FIS_UCI = [
-  "Tramadol 100mg (50mg/ml) 2ml","Midazolam 50mg/10ml",
-  "Fentanilo 0.05mg/ml 10ml","Diazepam 10mg/2ml","Remifentanilo 5mg/10ml"
+  "TRAMADOL 100MG (50MG/ML) 2ML AMPOLLA (TRAMADON)",
+  "MIDAZOLAM 50MG (5MG/ML) 10ML AMPOLLA (GRAY)",
+  "FENTANILO 0.05MG/ML X 10ML AMPOLLA",
+  "DIAZEPAM (COMPAZ) 10 MG/2ML",
+  "REMIFENTANILO 5MG X 10ML FCO"
 ];
 const INV_FIS_CX_CENTRAL = [
   "Misoprostol 200mcg","Tenecteplasa 50mg ampolla (Metalyse)"
@@ -1518,8 +1532,12 @@ function avisoConstancias(){
 // ---- Generación del PDF ----
 function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function segToHTML(seg){
-  const lines = seg.split('\n');
-  let h='<div class="pdf-block">';
+  let lines = seg.split('\n');
+  // Marcadores de continuación: el bloque se pega al anterior (sin borde/redondeo arriba)
+  let cls='pdf-block';
+  if(lines[0]==='@@MID@@'){ cls+=' pdf-cont pdf-cont-mid'; lines=lines.slice(1); }
+  else if(lines[0]==='@@END@@'){ cls+=' pdf-cont pdf-cont-end'; lines=lines.slice(1); }
+  let h='<div class="'+cls+'">';
   lines.forEach(line=>{
     let t = escHtml(line);
     t = t.replace(/\*([^*]+)\*/g,'<b>$1</b>');
@@ -1536,20 +1554,28 @@ function buildReportBlocks(){
   let segs=msg.split(DIV).map(s=>s.trim()).filter(s=>s.length);
   segs=segs.filter(s=>!s.includes('SERVICIO FARMACÉUTICO HEMA'));
   // Trocear segmentos largos en sub-bloques PEQUEÑOS (por renglón). Al ser pequeños,
-  // el paginado los acomoda densamente y nunca parte un paciente a la mitad.
-  const GRUPO=6; // renglones de pacientes por sub-bloque
+  // el paginado los acomoda densamente y nunca parte un ítem a la mitad.
+  // Los trozos de continuación se marcan con @@MID@@/@@END@@ para dibujarse PEGADOS
+  // (sin borde superior ni encabezado repetido), de modo que se vean como UNA sola caja.
+  const GRUPO=6; // renglones por sub-bloque
   const out=[];
   segs.forEach(seg=>{
     const lines=seg.split('\n');
     const header = /^(❄️|👤|📋|📦|📌)/.test(lines[0]) ? lines[0] : null;
     const cuerpo = header ? lines.slice(1) : lines.slice();
     if(cuerpo.length <= GRUPO){ out.push(seg); return; }
-    let primero=true;
+    const total=Math.ceil(cuerpo.length/GRUPO);
+    let idx=0;
     for(let i=0;i<cuerpo.length;i+=GRUPO){
       const trozo=cuerpo.slice(i,i+GRUPO);
-      const cab = header ? [primero ? header : header+' (cont.)'] : [];
-      out.push(cab.concat(trozo).join('\n'));
-      primero=false;
+      const esPrimero = idx===0;
+      const esUltimo = idx===total-1;
+      // marcador de continuación: @@MID@@ (ni primero ni último), @@END@@ (último)
+      const marca = esPrimero ? '' : (esUltimo ? '@@END@@' : '@@MID@@');
+      const cab = (header && esPrimero) ? [header] : [];
+      const cuerpoTrozo = (marca?[marca]:[]).concat(trozo);
+      out.push(cab.concat(cuerpoTrozo).join('\n'));
+      idx++;
     }
   });
   return out;
@@ -1580,7 +1606,9 @@ async function generarPDF(){
   drawPdfHeader(pdf, margin);
   let y=32;
   const blockEls=[...cont.querySelectorAll('.pdf-block')];
-  for(const el of blockEls){
+  for(let bi=0; bi<blockEls.length; bi++){
+    const el=blockEls[bi];
+    const siguienteEsCont = (bi+1<blockEls.length) && blockEls[bi+1].classList.contains('pdf-cont');
     let canvas;
     try{ canvas=await html2canvas(el, Object.assign({},baseOpts,{scale})); }
     catch(err){ canvas=await html2canvas(el, Object.assign({},baseOpts,{scale:1})); }
@@ -1589,14 +1617,17 @@ async function generarPDF(){
     if(imgH <= avail){
       // cabe entero en lo que queda de la página
       pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',margin,y,cw,imgH);
-      y += imgH + gap;
+      // si lo que sigue es continuación y cabe pegado, gap 0 (misma caja visual)
+      const pegar = siguienteEsCont && (bottom - (y+imgH)) > 10;
+      y += imgH + (pegar ? 0 : gap);
     } else if(imgH <= (bottom - margin)){
       // El sub-bloque cabe en una página pero no en lo que queda: pasarlo ENTERO
-      // a la página siguiente (nunca se parte un paciente). Los sub-bloques son
-      // pequeños (6 renglones), así que la página anterior queda bien aprovechada.
+      // a la página siguiente (nunca se parte un ítem). Los sub-bloques son
+      // pequeños, así que la página anterior queda bien aprovechada.
       pdf.addPage(); y=margin;
       pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',margin,y,cw,imgH);
-      y += imgH + gap;
+      const pegar = siguienteEsCont && (bottom - (y+imgH)) > 10;
+      y += imgH + (pegar ? 0 : gap);
     } else {
       // Respaldo: un bloque más alto que una página entera (no debería ocurrir con
       // sub-bloques de 6 renglones). Se corta por píxel para no romper el PDF.
