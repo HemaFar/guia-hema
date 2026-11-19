@@ -4,6 +4,36 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Entrega de Turno · Farmacia</title>
+<script type="module">
+  // ===== Firebase (guardar entregas + historial) =====
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyBl-VXIO11jxGgDFjtwcvKwG6ObKXZ3CCY",
+    authDomain: "entrega-turno-hema-13793.firebaseapp.com",
+    projectId: "entrega-turno-hema-13793",
+    storageBucket: "entrega-turno-hema-13793.firebasestorage.app",
+    messagingSenderId: "640896516070",
+    appId: "1:640896516070:web:92af4424c6280d0186a027"
+  };
+  try{
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    // Guardar una entrega
+    window.FB_guardar = async (datos)=>{
+      datos.creado = serverTimestamp();
+      return await addDoc(collection(db,'entregas'), datos);
+    };
+    // Leer todas las entregas (más recientes primero)
+    window.FB_listar = async ()=>{
+      const q = query(collection(db,'entregas'), orderBy('creado','desc'));
+      const snap = await getDocs(q);
+      return snap.docs.map(d=>({id:d.id, ...d.data()}));
+    };
+    window.FB_listo = true;
+  }catch(e){ window.FB_listo = false; console.error('Firebase no disponible:', e); }
+</script>
 <style>
   :root{
     --ink:#263340;
@@ -192,6 +222,24 @@
     border-radius:9px;cursor:pointer;
   }
   .pat-empty{font-size:13px;color:var(--muted);padding:6px 0}
+  .ni-check{display:flex;align-items:center;gap:7px;font-size:13.5px;color:var(--ink);cursor:pointer;padding:3px 0;user-select:none}
+  .ni-check input{width:18px;height:18px;accent-color:var(--brand,#15487F);cursor:pointer}
+  .hist-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:20px 12px;overflow:auto}
+  .hist-box{background:var(--card);color:var(--ink);width:100%;max-width:640px;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.3);overflow:hidden}
+  .hist-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);font-size:16px}
+  .hist-x{background:none;border:none;font-size:26px;line-height:1;color:var(--muted);cursor:pointer;padding:0 4px}
+  .hist-body{padding:16px}
+  .hist-main-btn{background:var(--brand,#15487F);color:#fff;border:none;border-radius:9px;padding:11px 16px;font-size:15px;cursor:pointer;width:100%}
+  .hist-filtros{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .hist-filtros input,.hist-filtros select{flex:1;min-width:120px;padding:9px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+  .hist-list{display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow:auto}
+  .hist-item{border:1px solid var(--line);border-radius:10px;padding:11px 13px}
+  .hist-item .hi-top{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted);margin-bottom:4px}
+  .hist-item .hi-area{font-weight:700;color:var(--ink);font-size:15px}
+  .hist-item .hi-meta{font-size:13px;color:var(--muted);margin:3px 0 8px}
+  .hist-item .hi-btns{display:flex;gap:8px;flex-wrap:wrap}
+  .hist-item .hi-btns button{font-size:13px;padding:7px 11px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+  .hist-empty{color:var(--muted);text-align:center;padding:20px}
   .sub-grupo{
     font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
     color:var(--accent);margin:16px 0 6px;
@@ -345,13 +393,19 @@
         <input type="text" id="emergAtendidos" placeholder="0" inputmode="numeric" readonly style="background:var(--bg);opacity:.85;cursor:not-allowed">
       </div>
       <div class="field" id="fldIngresados">
-        <label>Pacientes ingresados</label>
-        <input type="text" id="emergIngresados" placeholder="0" inputmode="numeric">
+        <label>Pacientes ingresados <span style="font-weight:400;color:var(--muted)">(automático)</span></label>
+        <input type="text" id="emergIngresados" placeholder="0" inputmode="numeric" readonly style="background:var(--bg);opacity:.85;cursor:not-allowed">
       </div>
     </div>
-    <div id="totalPacBox" class="field" style="display:none">
-      <label>Pacientes <span style="font-weight:400;color:var(--muted)">(automático)</span></label>
-      <input type="text" id="totalPac" placeholder="0" inputmode="numeric" readonly style="background:var(--bg);opacity:.85;cursor:not-allowed">
+    <div id="totalPacBox" class="row" style="display:none">
+      <div class="field">
+        <label>Pacientes <span style="font-weight:400;color:var(--muted)">(automático)</span></label>
+        <input type="text" id="totalPac" placeholder="0" inputmode="numeric" readonly style="background:var(--bg);opacity:.85;cursor:not-allowed">
+      </div>
+      <div class="field">
+        <label>Nuevos ingresos <span style="font-weight:400;color:var(--muted)">(automático)</span></label>
+        <input type="text" id="nuevoIng" placeholder="0" inputmode="numeric" readonly style="background:var(--bg);opacity:.85;cursor:not-allowed">
+      </div>
     </div>
     <div id="patList"></div>
     <button type="button" id="addPat" class="add-btn">+ Agregar paciente</button>
@@ -392,10 +446,41 @@
 <div class="fab">
   <div class="inner">
     <button id="resetBtn" title="Limpiar">⟲</button>
+    <button id="histBtn" title="Ver historial de entregas">🗂</button>
     <button id="sendBtn" title="Enviar texto y PDF">Enviar (texto + PDF)</button>
   </div>
 </div>
 <div class="toast" id="toast">Copiado ✓</div>
+
+<!-- Panel de Historial -->
+<div id="histModal" class="hist-modal" style="display:none">
+  <div class="hist-box">
+    <div class="hist-head">
+      <strong>Historial de entregas</strong>
+      <button id="histClose" class="hist-x" title="Cerrar">×</button>
+    </div>
+    <div id="histLogin" class="hist-body">
+      <p style="margin:0 0 10px">Ingresa la clave para ver el historial:</p>
+      <input type="password" id="histPass" placeholder="Clave" style="width:100%;margin-bottom:10px">
+      <button id="histEnter" class="hist-main-btn">Entrar</button>
+    </div>
+    <div id="histPanel" class="hist-body" style="display:none">
+      <div class="hist-filtros">
+        <input type="date" id="fDesde" title="Desde">
+        <input type="date" id="fHasta" title="Hasta">
+        <select id="fArea">
+          <option value="">Todas las áreas</option>
+          <option>Farmacia Urgencias</option>
+          <option>Farmacia UCI</option>
+          <option>Farmacia Cirugía</option>
+          <option>Servicio Farmacéutico Central</option>
+        </select>
+        <button id="fRefresh" class="hist-main-btn" style="padding:8px 14px">Actualizar</button>
+      </div>
+      <div id="histList" class="hist-list"></div>
+    </div>
+  </div>
+</div>
 
 <!-- Contenedor oculto para render del PDF -->
 <div id="pdfReport" aria-hidden="true"></div>
@@ -964,14 +1049,15 @@ function renderPatients(){
         ${extra}
         ${(state.area==='Farmacia UCI'||state.area==='Farmacia Cirugía'||state.area==='Farmacia Urgencias') ? `<input type="text" placeholder="ARS (obligatoria)" value="${(p.ars||'').replace(/"/g,'&quot;')}" data-pi="${i}" data-pf="ars" class="${p.nombre.trim() && !(p.ars||'').trim() ? 'ars-falta' : ''}">` : ''}
         <input type="text" placeholder="Notas" value="${p.nota.replace(/"/g,'&quot;')}" data-pi="${i}" data-pf="nota">
+        ${state.area==='Farmacia UCI' ? `<label class="ni-check"><input type="checkbox" data-pi="${i}" data-pf="nuevo" ${p.nuevo?'checked':''}> Nuevo ingreso</label>` : ''}
       </div>
       <button type="button" class="del" data-del="${i}" title="Quitar">×</button>`;
     patList.appendChild(row);
   });
   patList.querySelectorAll('input,select').forEach(inp=>{
-    inp.addEventListener('input',e=>{
+    inp.addEventListener(inp.type==='checkbox'?'change':'input',e=>{
       const i=+e.target.dataset.pi, f=e.target.dataset.pf;
-      patients[i][f]=e.target.value;
+      patients[i][f] = e.target.type==='checkbox' ? e.target.checked : e.target.value;
       render();
     });
   });
@@ -1060,6 +1146,7 @@ function renderCentralSubs(){
             </div>
             <input type="text" placeholder="ARS (obligatoria)" value="${(p.ars||'').replace(/"/g,'&quot;')}" data-sk="${sec.key}" data-si="${i}" data-sf="ars" class="${p.nombre.trim() && !(p.ars||'').trim() ? 'ars-falta' : ''}">
             <input type="text" placeholder="Notas" value="${p.nota.replace(/"/g,'&quot;')}" data-sk="${sec.key}" data-si="${i}" data-sf="nota">
+            <label class="ni-check"><input type="checkbox" data-sk="${sec.key}" data-si="${i}" data-sf="nuevo" ${p.nuevo?'checked':''}> Nuevo ingreso</label>
           </div>
           <button type="button" class="del" data-delsk="${sec.key}" data-delsi="${i}" title="Quitar">×</button>`;
         listBox.appendChild(row);
@@ -1070,15 +1157,15 @@ function renderCentralSubs(){
     addBtn.type='button';
     addBtn.className='add-btn';
     addBtn.textContent='+ Agregar paciente';
-    addBtn.onclick=()=>{ centralPats[sec.key].push({cama:'',nombre:'',nota:'',ars:''}); renderCentralSubs(); render(); };
+    addBtn.onclick=()=>{ centralPats[sec.key].push({cama:'',nombre:'',nota:'',ars:'',nuevo:false}); renderCentralSubs(); render(); };
     wrap.appendChild(addBtn);
     centralSubs.appendChild(wrap);
   });
   // listeners
   centralSubs.querySelectorAll('input,select').forEach(inp=>{
-    inp.addEventListener('input',e=>{
+    inp.addEventListener(inp.type==='checkbox'?'change':'input',e=>{
       const k=e.target.dataset.sk, i=+e.target.dataset.si, f=e.target.dataset.sf;
-      centralPats[k][i][f]=e.target.value;
+      centralPats[k][i][f] = e.target.type==='checkbox' ? e.target.checked : e.target.value;
       render();
     });
   });
@@ -1256,9 +1343,9 @@ function buildMessage(){
     if(anyPat){
       L.push(DIV);
       L.push(`👤 *PACIENTES*`);
-      let totalC=0;
-      CENTRAL_SECS.forEach(sec=>{ totalC += centralPats[sec.key].filter(p=>p.nombre.trim()).length; });
-      L.push(`Total de pacientes: *${totalC}*`);
+      let totalC=0, nuevoC=0;
+      CENTRAL_SECS.forEach(sec=>{ centralPats[sec.key].forEach(p=>{ if(p.nombre.trim()){ totalC++; if(p.nuevo) nuevoC++; } }); });
+      L.push(`Total de pacientes: *${totalC}*  ·  Nuevos ingresos: *${nuevoC}*`);
       CENTRAL_SECS.forEach(sec=>{
         const arr=centralPats[sec.key].filter(p=>p.cama.trim()||p.nombre.trim());
         if(arr.length){
@@ -1292,7 +1379,9 @@ function buildMessage(){
       } else if(esCx && atendidos!==''){
         L.push(`Atendidos: *${atendidos||'0'}*`);
       } else if(esUCI){
-        L.push(`Total de pacientes: *${patients.filter(p=>p.nombre.trim()).length}*`);
+        const totU=patients.filter(p=>p.nombre.trim()).length;
+        const niU=patients.filter(p=>p.nombre.trim() && p.nuevo).length;
+        L.push(`Total de pacientes: *${totU}*  ·  Nuevos ingresos: *${niU}*`);
       }
       validPats.forEach(p=>{
         const cama=p.cama.trim();
@@ -1373,20 +1462,30 @@ function actualizarAtendidos(){
   if(!inp) return;
   const n = patients.filter(p=>p.nombre.trim()).length;
   inp.value = String(n);
+  // "Pacientes ingresados" (solo Urgencias) = pacientes con status que implica ingreso
+  if(state.area==='Farmacia Urgencias'){
+    const inpIng=document.getElementById('emergIngresados');
+    if(inpIng){
+      const ing = patients.filter(p=>p.nombre.trim() && (p.status==='Hospitalizado' || p.status==='Alta con Ingreso')).length;
+      inpIng.value = String(ing);
+    }
+  }
 }
 function actualizarTotalPac(){
-  // Casilla "Pacientes" (total automático) en Central y UCI
+  // Casilla "Pacientes" (total automático) y "Nuevos ingresos" en Central y UCI
   const inp=document.getElementById('totalPac');
   if(!inp) return;
-  let n=0;
+  let n=0, ni=0;
   if(state.area==='Servicio Farmacéutico Central'){
     Object.keys(centralPats).forEach(k=>{
-      n += centralPats[k].filter(p=>p.nombre.trim()).length;
+      centralPats[k].forEach(p=>{ if(p.nombre.trim()){ n++; if(p.nuevo) ni++; } });
     });
   } else if(state.area==='Farmacia UCI'){
-    n = patients.filter(p=>p.nombre.trim()).length;
+    patients.forEach(p=>{ if(p.nombre.trim()){ n++; if(p.nuevo) ni++; } });
   }
   inp.value = String(n);
+  const inpNi=document.getElementById('nuevoIng');
+  if(inpNi) inpNi.value = String(ni);
 }
 function render(){ actualizarAtendidos(); actualizarTotalPac(); document.getElementById('preview').textContent=buildMessage(); actualizarContador(); saveState(); }
 
@@ -1548,9 +1647,9 @@ function segToHTML(seg){
   });
   return h+'</div>';
 }
-function buildReportBlocks(){
+function buildReportBlocks(msgArg){
   const DIV='━━━━━━━━━━━━━━';
-  const msg=buildMessage();
+  const msg = (typeof msgArg==='string' && msgArg) ? msgArg : buildMessage();
   let segs=msg.split(DIV).map(s=>s.trim()).filter(s=>s.length);
   segs=segs.filter(s=>!s.includes('SERVICIO FARMACÉUTICO HEMA'));
   // Trocear segmentos largos en sub-bloques PEQUEÑOS (por renglón). Al ser pequeños,
@@ -1593,10 +1692,10 @@ function drawPdfHeader(pdf, margin){
   pdf.line(margin,25,210-margin,25);
 }
 // Genera el PDF y devuelve el objeto jsPDF
-async function generarPDF(){
+async function generarPDF(msgArg){
   const { jsPDF } = window.jspdf;
   const cont=document.getElementById('pdfReport');
-  cont.innerHTML = buildReportBlocks().map(segToHTML).join('');
+  cont.innerHTML = buildReportBlocks(msgArg).map(segToHTML).join('');
   await new Promise(r=>setTimeout(r,60));
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
   const baseOpts={ backgroundColor:'#ffffff', allowTaint:false, useCORS:true, imageTimeout:0, logging:false };
@@ -1655,8 +1754,28 @@ async function generarPDF(){
 }
 
 // ---- Enviar: texto + PDF juntos, con un solo botón ----
+// Guarda la entrega actual en Firebase (no bloquea el envío por WhatsApp)
+async function guardarEntregaFB(msg){
+  if(!window.FB_listo || typeof window.FB_guardar!=='function') return; // Firebase no cargó
+  const gvv=(id)=>{ const el=document.getElementById(id); return el?el.value.trim():''; };
+  const datos = {
+    area: state.area || '',
+    horario: state.horario || '',
+    fecha: gvv('fecha'),                    // YYYY-MM-DD (para filtrar)
+    entregaPersona: gvv('entregaPersona'),
+    atendidos: gvv('emergAtendidos'),
+    ingresados: gvv('emergIngresados'),
+    totalPacientes: gvv('totalPac'),
+    nuevosIngresos: gvv('nuevoIng'),
+    reporte: msg                            // texto completo, para regenerar el PDF
+  };
+  try{ await window.FB_guardar(datos); }catch(e){ console.error('No se pudo guardar en Firebase:', e); }
+}
+
 document.getElementById('sendBtn').onclick=async()=>{
   if(!validarReporte()) return;
+  // Guardar la entrega en el historial (en segundo plano; si falla, el envío continúa igual)
+  guardarEntregaFB(buildMessage());
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
   const msg=buildMessage();
   // ¿El navegador puede compartir archivos? (celular) — se decide ANTES para actuar dentro del toque
@@ -1760,6 +1879,89 @@ function copiarTexto(txt){
   // respaldo moderno (no bloqueante)
   try{ if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(()=>{},()=>{}); }catch(e){}
   return ok;
+}
+
+// ===== Historial de entregas (Firebase) =====
+const HIST_CLAVE = 'hema2024'; // clave para ver el historial (cámbiala si quieres)
+let histCache = [];
+const $hist = (id)=>document.getElementById(id);
+
+$hist('histBtn').onclick=()=>{
+  $hist('histModal').style.display='flex';
+  // si ya entró antes en esta sesión, mostrar panel directo
+  if(sessionStorage.getItem('histOk')==='1'){ mostrarPanelHist(); }
+  else { $hist('histLogin').style.display=''; $hist('histPanel').style.display='none'; $hist('histPass').value=''; $hist('histPass').focus(); }
+};
+$hist('histClose').onclick=()=>{ $hist('histModal').style.display='none'; };
+$hist('histModal').addEventListener('click',e=>{ if(e.target===$hist('histModal')) $hist('histModal').style.display='none'; });
+$hist('histEnter').onclick=()=>{
+  if($hist('histPass').value===HIST_CLAVE){ try{sessionStorage.setItem('histOk','1')}catch(e){} mostrarPanelHist(); }
+  else { alert('Clave incorrecta'); }
+};
+$hist('histPass').addEventListener('keydown',e=>{ if(e.key==='Enter') $hist('histEnter').click(); });
+$hist('fRefresh').onclick=()=>cargarHist();
+$hist('fDesde').onchange=renderHistList;
+$hist('fHasta').onchange=renderHistList;
+$hist('fArea').onchange=renderHistList;
+
+async function mostrarPanelHist(){
+  $hist('histLogin').style.display='none';
+  $hist('histPanel').style.display='';
+  await cargarHist();
+}
+async function cargarHist(){
+  const cont=$hist('histList');
+  if(!window.FB_listo){ cont.innerHTML='<div class="hist-empty">El historial no está disponible (sin conexión a la base de datos).</div>'; return; }
+  cont.innerHTML='<div class="hist-empty">Cargando…</div>';
+  try{
+    histCache = await window.FB_listar();
+    renderHistList();
+  }catch(e){
+    cont.innerHTML='<div class="hist-empty">No se pudo cargar el historial.</div>';
+    console.error(e);
+  }
+}
+function fmtFecha(d){
+  if(d && d.fecha) return d.fecha;
+  return '';
+}
+function renderHistList(){
+  const cont=$hist('histList');
+  const desde=$hist('fDesde').value, hasta=$hist('fHasta').value, area=$hist('fArea').value;
+  let items=histCache.filter(d=>{
+    if(area && d.area!==area) return false;
+    const f=d.fecha||'';
+    if(desde && f && f<desde) return false;
+    if(hasta && f && f>hasta) return false;
+    return true;
+  });
+  if(!items.length){ cont.innerHTML='<div class="hist-empty">No hay entregas para ese filtro.</div>'; return; }
+  cont.innerHTML='';
+  items.forEach(d=>{
+    const div=document.createElement('div');
+    div.className='hist-item';
+    const totalTxt = d.totalPacientes ? `Total: ${d.totalPacientes}` : (d.atendidos?`Atendidos: ${d.atendidos}`:'');
+    const niTxt = d.nuevosIngresos ? ` · Nuevos: ${d.nuevosIngresos}` : (d.ingresados?` · Ingresados: ${d.ingresados}`:'');
+    div.innerHTML=`
+      <div class="hi-top"><span>${d.fecha||''} · ${d.horario||''}</span></div>
+      <div class="hi-area">${d.area||'—'}</div>
+      <div class="hi-meta">Entrega: ${d.entregaPersona||'—'}${(totalTxt||niTxt)?' · '+totalTxt+niTxt:''}</div>
+      <div class="hi-btns">
+        <button data-act="pdf">📄 Descargar PDF</button>
+        <button data-act="copy">📋 Copiar texto</button>
+      </div>`;
+    div.querySelector('[data-act="pdf"]').onclick=async(ev)=>{
+      const b=ev.target; const o=b.textContent; b.disabled=true; b.textContent='Generando…';
+      try{ const pdf=await generarPDF(d.reporte||''); pdf.save('Entrega-'+(d.fecha||'')+'.pdf'); }
+      catch(e){ alert('No se pudo generar el PDF'); }
+      finally{ b.disabled=false; b.textContent=o; }
+    };
+    div.querySelector('[data-act="copy"]').onclick=()=>{
+      const ok=copiarTexto(d.reporte||'');
+      flash(ok?'📋 Texto copiado':'No se pudo copiar');
+    };
+    cont.appendChild(div);
+  });
 }
 
 loadState();
