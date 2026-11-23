@@ -229,6 +229,7 @@
     border-radius:9px;cursor:pointer;
   }
   .pat-empty{font-size:13px;color:var(--muted);padding:6px 0}
+  .sec-count{font-weight:700;color:var(--brand,#15487F);font-size:.92em}
   .ni-check{display:flex;align-items:center;gap:7px;font-size:13.5px;color:var(--ink);cursor:pointer;padding:3px 0;user-select:none}
   .ni-check input{width:18px;height:18px;accent-color:var(--brand,#15487F);cursor:pointer}
   .hist-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:20px 12px;overflow:auto}
@@ -1123,7 +1124,8 @@ function renderCentralSubs(){
     wrap.className='sub-sec';
     const title=document.createElement('div');
     title.className='sub-title';
-    title.textContent=sec.key;
+    const nSec=centralPats[sec.key].filter(p=>p.nombre.trim()).length;
+    title.innerHTML=`${sec.key} <span class="sec-count">(${nSec})</span>`;
     wrap.appendChild(title);
     const listBox=document.createElement('div');
     const arr=centralPats[sec.key];
@@ -1357,7 +1359,8 @@ function buildMessage(){
       CENTRAL_SECS.forEach(sec=>{
         const arr=centralPats[sec.key].filter(p=>p.cama.trim()||p.nombre.trim());
         if(arr.length){
-          L.push(`*▪️ ${sec.key.toUpperCase()}*`);
+          const nSec=centralPats[sec.key].filter(p=>p.nombre.trim()).length;
+          L.push(`*▪️ ${sec.key.toUpperCase()}* (${nSec})`);
           arr.forEach(p=>{
             const cama=p.cama.trim();
             const nom=p.nombre.trim();
